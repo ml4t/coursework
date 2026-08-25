@@ -151,3 +151,50 @@ def test_status_lists_every_component_the_course_asks_for():
 def test_the_stamp_records_which_unit_wrote_it():
     save_component("fold_splitter", _good_splitter(), quiet=True)
     assert _meta("fold_splitter")["unit"] == "3.1"
+
+
+def test_the_packaged_fingerprint_matches_the_repository_copy():
+    """The package ships its own copy, because a student never has the repository. Two copies
+    drift, so this is the check that they have not."""
+    from pathlib import Path
+
+    from ml4t_foundations import data
+
+    repo = Path(__file__).resolve().parents[2] / "data" / "etf_close_fingerprint.csv"
+    if not repo.is_file():
+        pytest.skip("not running inside the course repository")
+    assert data.fingerprint().equals(pd.read_csv(repo, index_col="symbol"))
+
+
+def test_loading_prices_before_setup_says_what_to_do():
+    from ml4t_foundations import data
+
+    with pytest.raises(FileNotFoundError, match="setup notebook"):
+        data.load()
+
+
+def test_the_symbol_list_is_the_hundred_the_course_uses():
+    from ml4t_foundations import data
+
+    assert len(data.SYMBOLS) == 100
+    assert len(set(data.SYMBOLS)) == 100
+    assert set(data.fingerprint().index) == set(data.SYMBOLS)
+
+
+def test_the_fingerprint_check_reads_the_columns_the_fingerprint_has():
+    """The packaged check and the repository's authoring script have to agree on tolerances, and
+    the first version of this read column names the fingerprint does not carry."""
+    import numpy as np
+
+    from ml4t_foundations import data
+
+    reference = data.fingerprint()
+    index = pd.bdate_range("2006-01-03", periods=400, name="date")
+    rng = np.random.default_rng(0)
+    fake = pd.DataFrame(
+        100 * np.exp(np.cumsum(rng.normal(0, 0.012, size=(len(index), len(data.SYMBOLS))), axis=0)),
+        index=index, columns=sorted(data.SYMBOLS))
+    text = data.check(fake)
+    assert "checked 100 of 100" in text
+    assert "Worth a look" in text, "400 random sessions should not look like the course's panel"
+    assert set(reference.columns) >= {"sessions", "annualized_vol", "mean_abs_return"}
