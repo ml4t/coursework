@@ -12,46 +12,66 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 # ---------------------------------------------------------------------------
-# HOLD, 2026-08-25. Stefan ruled that this package moves out of foundations-dev
-# and becomes its own library repo in ~/ml4t/libraries alongside the six other
-# ml4t-* libraries. Do not upload from here.
+# HOLD until the package has moved to its own repo, ~/ml4t/libraries/coursework
+# (Stefan, 2026-08-25). Do not upload from inside foundations-dev.
 #
-# The order matters and cannot be redone: claiming a PyPI name is permanent, and
-# the first release's metadata is what the project page shows. Uploading from
-# the path the package is leaving publishes a Homepage and a source link that
-# are wrong on day one. Move first, set the repository URL, then upload.
+# The order cannot be redone. Claiming a PyPI name is permanent, and the first
+# release's metadata is what the project page shows forever after, so uploading
+# from the path the package is leaving publishes a source link that is wrong on
+# day one. Move first, then upload.
 #
-# Outstanding before the first upload:
-#   - the move, and the repo name and whether it takes a -dev sidecar
-#     (three of the six libraries have one, three do not)
-#   - [project.urls] Repository, which does not exist yet; Homepage is
-#     https://ml4trading.io and should stay
+# Settled and already in pyproject.toml: MIT licence, and the house URL pattern
+# pointing at github.com/ml4t/coursework. The repo is ml4t/coursework public
+# with an ml4t/coursework-dev private sidecar.
 #
-# When that is done, delete this block. Nothing else in this script changes.
+# Once the move has landed, delete this block. Nothing else in the script changes.
 # ---------------------------------------------------------------------------
 if [ "${1:-}" != "--move-is-done" ]; then
     cat <<'HOLD'
-HOLD, 2026-08-25. This package moves out of foundations-dev and becomes its own
-library repo in ~/ml4t/libraries alongside the six other ml4t-* libraries
-(Stefan). Do not upload from here.
+Refusing to upload: the package has not moved yet.
 
-The order matters and cannot be redone. Claiming a PyPI name is permanent, and
-the first release's metadata is what the project page shows, so uploading from
-the path the package is leaving publishes a source link that is wrong on day
-one. Move first, set the repository URL, then upload.
+ml4t-coursework becomes its own repo, ml4t/coursework, alongside the other
+published ml4t-* libraries. A PyPI name is permanent and the first release's
+metadata is frozen with it, so uploading from inside foundations-dev publishes
+a source link that is wrong on day one.
 
-Outstanding before the first upload:
-  - the move, the repo name, and whether it takes a -dev sidecar
-    (three of the six libraries have one, three do not)
-  - [project.urls] Repository, which does not exist yet.
-    Homepage is https://ml4trading.io and stays.
-
-Once that is done, delete the hold block from this script. Nothing else changes.
+Re-run with --move-is-done once the extraction has landed.
 HOLD
-    echo
-    echo "Refusing to upload. Re-run with --move-is-done to override."
     exit 1
 fi
+
+# The flag says the source moved. These check that the metadata moved with it,
+# because those two can come apart and only one of them is visible on PyPI.
+echo "== metadata =="
+metadata_fault=0
+for key in Homepage Repository Issues Documentation Changelog; do
+    if ! grep -q "^${key} = " pyproject.toml; then
+        echo "  MISSING [project.urls] ${key}"
+        metadata_fault=1
+    fi
+done
+if grep -q "Proprietary" pyproject.toml; then
+    echo "  pyproject.toml still says Proprietary. The licence is MIT, like every sibling."
+    metadata_fault=1
+fi
+if ! grep -q 'license = { text = "MIT" }' pyproject.toml; then
+    echo "  MISSING the MIT licence declaration"
+    metadata_fault=1
+fi
+if [ ! -f LICENSE ]; then
+    echo "  MISSING the LICENSE file"
+    metadata_fault=1
+fi
+if grep -q "ml4trading.io\"*$" <(grep "^Homepage" pyproject.toml); then
+    echo "  Homepage points at the marketing site. House pattern points it at the repo."
+    metadata_fault=1
+fi
+if [ "$metadata_fault" -ne 0 ]; then
+    echo
+    echo "Refusing to upload. The first release freezes all of this and a release cannot be redone."
+    exit 1
+fi
+echo "  urls, licence and LICENSE file all present"
 
 echo "== tests =="
 uv run pytest -q

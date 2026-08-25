@@ -83,4 +83,4 @@ data.load()         # what every notebook reads
 
 ## Licence
 
-Proprietary. Published for installability, not for reuse.
+MIT, in line with the other `ml4t-*` libraries. See `LICENSE`.
