@@ -1,14 +1,14 @@
-# ml4t-foundations
+# ml4t-coursework
 
-**Support package for the course *ML for Trading: Foundations*.** It is the plumbing every
-notebook in that course runs on: the student's project folder, the conformance checks that run when
-they save a piece of the pipeline they have written, the results log the final unit reads, and the
-report they submit.
+**Support package for the ML for Trading courses.** It is the plumbing their notebooks run on: the
+student's project folder, the conformance checks that run when they save a piece of the pipeline
+they have written, the results log the closing unit reads, and the report they submit. It is named
+for what it holds rather than for a course, because more than one course installs it.
 
 It is published here so that the first cell of a notebook on a free Colab runtime can be
 
 ```python
-!pip install -q ml4t-foundations
+!pip install -q ml4t-coursework
 ```
 
 with no account, no credential and no repository to clone. That is the whole reason it is on PyPI.
@@ -19,8 +19,15 @@ enrolled; it is installable by anyone, and it will not teach you anything on its
 
 ## What it does
 
+A notebook opens by saying which course it belongs to. That is what decides the project folder on
+the student's Drive and which stage names their results rows may carry, so two courses on one Drive
+never write over each other:
+
 ```python
-from ml4t_foundations import save_component, load_component, append_result, report
+import ml4t_coursework as mlc
+mlc.use("foundations")
+
+from ml4t_coursework import save_component, load_component, append_result, report
 ```
 
 - **`save_component(name, obj)`** runs the component's contract test, prints what passed and what
@@ -33,7 +40,17 @@ from ml4t_foundations import save_component, load_component, append_result, repo
   and the written answers.
 
 `status()` shows where every component stands; `contract(name).describe()` shows what any one of
-them has to satisfy; `catalog()` lists all twenty.
+them has to satisfy; `catalog()` lists them all.
+
+A course adds its own components and its own stage names without a change here:
+
+```python
+from ml4t_coursework import Course, register_course, add_source
+
+register_course(Course(key="...", title="...", folder="ml4t-...", env_var="ML4T_..._HOME",
+                       stages=("...",), terminal_stages=("...",)))
+add_source("your_package.components")   # every module in it registers one contract
+```
 
 ## How the checks work, and what they deliberately do not do
 
@@ -48,7 +65,7 @@ memory, because what a later notebook loads on a cold session is the file. Somet
 works because of another cell in the same session fails at save time, with a message naming the
 missing symbol.
 
-Twenty reference implementations ship with the package. That is by design rather than an oversight:
+Reference implementations ship with the package. That is by design rather than an oversight:
 the fallback is what stops one wrong component from blocking the rest of the course, so there is
 nothing here that could be leaked.
 
@@ -59,7 +76,7 @@ ships is everything else - the symbol list, the window, the fetch, and a one-way
 check a download against:
 
 ```python
-from ml4t_foundations import data
+from ml4t_coursework import data
 data.download()     # once, into the project folder
 data.load()         # what every notebook reads
 ```

@@ -1,5 +1,8 @@
 """The one project folder, and how a notebook finds it.
 
+Where it is comes from the course the session selected, so two courses on one Drive keep separate
+folders and separate components.
+
 It is a Google Drive folder, not a repository: git is not a prerequisite of this course. The setup
 notebook creates it once and every later notebook mounts it. Nothing in the course depends on what
 is in it - data re-fetches if absent, the results file is created if missing, and a component the
@@ -11,8 +14,8 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-FOLDER_NAME = "ml4t-foundations"
-ENV_VAR = "ML4T_FOUNDATIONS_HOME"
+from .course import active_course
+
 DRIVE_MOUNT = Path("/content/drive")
 
 
@@ -33,13 +36,14 @@ def mount_drive(quiet: bool = True) -> bool:
 
 def home(create: bool = True) -> Path:
     """The project folder, resolved in the order: environment override, Drive, home directory."""
-    override = os.environ.get(ENV_VAR)
+    course = active_course()
+    override = os.environ.get(course.env_var)
     if override:
         path = Path(override).expanduser()
     elif (DRIVE_MOUNT / "MyDrive").is_dir():
-        path = DRIVE_MOUNT / "MyDrive" / FOLDER_NAME
+        path = DRIVE_MOUNT / "MyDrive" / course.folder
     else:
-        path = Path.home() / FOLDER_NAME
+        path = Path.home() / course.folder
     if create:
         for sub in ("components", "results", "data"):
             (path / sub).mkdir(parents=True, exist_ok=True)

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Upload ml4t-foundations to PyPI. Run by Stefan, not by an agent: the token is his and the
+# Upload ml4t-coursework to PyPI. Run by Stefan, not by an agent: the token is his and the
 # first upload of a name cannot be undone.
 #
 #   bash ~/ml4t/courses/foundations-dev/helper/publish.sh
@@ -16,15 +16,15 @@ uv run pytest -q
 
 echo
 echo "== is the name still free? =="
-if curl -sf -o /dev/null "https://pypi.org/pypi/ml4t-foundations/json"; then
-    echo "  ml4t-foundations already EXISTS on PyPI."
+if curl -sf -o /dev/null "https://pypi.org/pypi/ml4t-coursework/json"; then
+    echo "  ml4t-coursework already EXISTS on PyPI."
     echo "  This would be a new release of an existing project, not a first claim."
     echo "  Check the version in pyproject.toml before continuing; an existing version cannot"
     echo "  be overwritten and a wrong one cannot be withdrawn."
     read -r -p "  Continue? [y/N] " reply
     [[ "$reply" == "y" || "$reply" == "Y" ]] || { echo "  stopped"; exit 1; }
 else
-    echo "  ml4t-foundations is unclaimed. This upload claims it."
+    echo "  ml4t-coursework is unclaimed. This upload claims it."
 fi
 
 echo
@@ -47,13 +47,13 @@ echo "== verify the published artifact installs =="
 rm -rf /tmp/ml4t-pypi-check
 uv venv --python 3.11 /tmp/ml4t-pypi-check -q
 echo "  waiting for the index to catch up before installing"
-until uv pip install --python /tmp/ml4t-pypi-check -q "ml4t-foundations==${VERSION}" 2>/dev/null; do
+until uv pip install --python /tmp/ml4t-pypi-check -q "ml4t-coursework==${VERSION}" 2>/dev/null; do
     sleep 5
 done
 /tmp/ml4t-pypi-check/bin/python -c "
-import ml4t_foundations as m
-from ml4t_foundations import contracts
+import ml4t_coursework as m
+from ml4t_coursework import contracts
 print('installed', m.__version__, 'with', len(contracts.load_all()), 'components')"
 echo
 echo "Done. Change the first cell of the setup notebook and every unit notebook to:"
-echo "    %pip install -q ml4t-foundations"
+echo "    %pip install -q ml4t-coursework"

@@ -11,8 +11,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from ml4t_foundations import contracts
-from ml4t_foundations.checks import evaluate
+from ml4t_coursework import contracts
+from ml4t_coursework.checks import evaluate
 
 ALL = sorted(contracts.load_all())
 

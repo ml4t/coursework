@@ -7,9 +7,9 @@ import json
 import pandas as pd
 import pytest
 
-from ml4t_foundations import (append_result, contract, load_component, project, report, results,
+from ml4t_coursework import (append_result, contract, load_component, project, report, results,
                               save_component, source_of, status)
-from ml4t_foundations.components import _meta
+from ml4t_coursework.components import _meta
 
 
 def _good_splitter():
@@ -158,7 +158,7 @@ def test_the_packaged_fingerprint_matches_the_repository_copy():
     drift, so this is the check that they have not."""
     from pathlib import Path
 
-    from ml4t_foundations import data
+    from ml4t_coursework import data
 
     repo = Path(__file__).resolve().parents[2] / "data" / "etf_close_fingerprint.csv"
     if not repo.is_file():
@@ -167,14 +167,14 @@ def test_the_packaged_fingerprint_matches_the_repository_copy():
 
 
 def test_loading_prices_before_setup_says_what_to_do():
-    from ml4t_foundations import data
+    from ml4t_coursework import data
 
     with pytest.raises(FileNotFoundError, match="setup notebook"):
         data.load()
 
 
 def test_the_symbol_list_is_the_hundred_the_course_uses():
-    from ml4t_foundations import data
+    from ml4t_coursework import data
 
     assert len(data.SYMBOLS) == 100
     assert len(set(data.SYMBOLS)) == 100
@@ -186,7 +186,7 @@ def test_the_fingerprint_check_reads_the_columns_the_fingerprint_has():
     the first version of this read column names the fingerprint does not carry."""
     import numpy as np
 
-    from ml4t_foundations import data
+    from ml4t_coursework import data
 
     reference = data.fingerprint()
     index = pd.bdate_range("2006-01-03", periods=400, name="date")

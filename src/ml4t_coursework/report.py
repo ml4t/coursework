@@ -12,14 +12,15 @@ from pathlib import Path
 
 from . import contracts, project, results
 from .components import _meta
-
-TERMINAL_STAGES = ("baseline", "v0", "final")
+from .course import active_course
 
 
 def report(answers: dict[str, str] | None = None, quiet: bool = False) -> dict:
     """Write and return the submission report: conformance, the three runs, the written answers."""
     from . import __version__
 
+    course = active_course()
+    terminal_stages = course.terminal_stages
     answers = answers or {}
     known = contracts.load_all()
     stamps = {}
@@ -32,14 +33,14 @@ def report(answers: dict[str, str] | None = None, quiet: bool = False) -> dict:
             "stamped_at": (meta or {}).get("stamped_at"),
         }
 
-    runs = {stage: None for stage in TERMINAL_STAGES}
-    for stage in TERMINAL_STAGES:
+    runs = {stage: None for stage in terminal_stages}
+    for stage in terminal_stages:
         row = results.latest(stage)
         if row is not None:
             runs[stage] = {k: (None if row[k] != row[k] else row[k]) for k in row.index}
 
     payload = {
-        "course": "ML4T: Foundations",
+        "course": course.title,
         "written_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "helper_version": __version__,
         "components": stamps,
@@ -51,7 +52,7 @@ def report(answers: dict[str, str] | None = None, quiet: bool = False) -> dict:
     }
     payload["complete"] = (
         payload["components_conformant"] == payload["components_required"]
-        and len(payload["runs_present"]) == len(TERMINAL_STAGES)
+        and len(payload["runs_present"]) == len(terminal_stages)
         and len([v for v in payload["written_answers"].values() if len(v) >= 40]) >= 2
     )
 
@@ -62,7 +63,7 @@ def report(answers: dict[str, str] | None = None, quiet: bool = False) -> dict:
         print(f"  components conformant: {payload['components_conformant']} of "
               f"{payload['components_required']}")
         print(f"  runs present: {', '.join(payload['runs_present']) or 'none'}")
-        missing = [s for s in TERMINAL_STAGES if runs[s] is None]
+        missing = [s for s in terminal_stages if runs[s] is None]
         if missing:
             print(f"  still needed: a run at stage {', '.join(missing)}")
         if not payload["complete"]:

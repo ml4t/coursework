@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "ml4t-foundations"
-version = "0.1.0"
-description = "The project folder, component conformance checks and results log for the ML4T Foundations course"
+name = "ml4t-coursework"
+version = "0.2.0"
+description = "Project folder, component conformance checks and results log for the ML4T courses"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Proprietary" }
@@ -34,8 +34,8 @@ dev = ["pytest>=8.0"]
 data = ["yfinance>=0.2.40"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/ml4t_foundations"]
-artifacts = ["src/ml4t_foundations/data/*.csv"]
+packages = ["src/ml4t_coursework"]
+artifacts = ["src/ml4t_coursework/data/*.csv"]
 
 [tool.ruff]
 line-length = 100

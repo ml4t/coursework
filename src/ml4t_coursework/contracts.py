@@ -9,10 +9,14 @@ from __future__ import annotations
 
 import importlib
 import pkgutil
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from types import ModuleType
 from typing import Any, Callable
 
 CONTRACTS: dict[str, "Contract"] = {}
+
+_SOURCES: list[str] = [f"{__package__}.reference"]
+_LOADED: set[str] = set()
 
 
 @dataclass
@@ -45,20 +49,39 @@ class Contract:
 
 
 def register(contract: Contract) -> Contract:
-    if contract.name in CONTRACTS:
-        raise ValueError(f"{contract.name} is already registered")
+    existing = CONTRACTS.get(contract.name)
+    if existing is not None and existing is not contract:
+        raise ValueError(
+            f"Two different contracts are both called {contract.name!r}.\n"
+            f"  Already registered from: {existing.reference.__module__}\n"
+            f"  Now registering from:    {contract.reference.__module__}\n"
+            f"  Component names are shared across every registered source, so pick another."
+        )
     CONTRACTS[contract.name] = contract
     return contract
 
 
-def load_all() -> dict[str, Contract]:
-    """Import every module under `reference/`, each of which registers one contract."""
-    from . import reference
+def add_source(package: str | ModuleType) -> None:
+    """Add a package of contract modules to discovery. A course outside this one calls this."""
+    name = package if isinstance(package, str) else package.__name__
+    if name not in _SOURCES:
+        _SOURCES.append(name)
 
-    if not CONTRACTS:
-        for module in pkgutil.iter_modules(reference.__path__):
+
+def load_all() -> dict[str, Contract]:
+    """Import every module in every registered source package, each of which registers a contract.
+
+    Tracked per source rather than by whether the registry is empty: a caller that pre-registers
+    one contract of its own must not suppress the import of every other source.
+    """
+    for source in list(_SOURCES):
+        if source in _LOADED:
+            continue
+        _LOADED.add(source)
+        package = importlib.import_module(source)
+        for module in pkgutil.iter_modules(package.__path__):
             if not module.name.startswith("_"):
-                importlib.import_module(f"{reference.__name__}.{module.name}")
+                importlib.import_module(f"{package.__name__}.{module.name}")
     return CONTRACTS
 
 

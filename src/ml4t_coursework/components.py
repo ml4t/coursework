@@ -21,7 +21,7 @@ from .checks import Conformance, evaluate
 __version_marker__ = "components"
 
 _PREAMBLE = (
-    "# Saved by ml4t-foundations. This is your own code, exactly as you wrote it.\n"
+    "# Saved by ml4t-coursework. This is your own code, exactly as you wrote it.\n"
     "import numpy as np\n"
     "import pandas as pd\n\n"
 )

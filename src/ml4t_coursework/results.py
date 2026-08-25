@@ -1,5 +1,8 @@
 """One appended row per pipeline run.
 
+The columns are shared by every course; which stage names are legal is the course's own, so a
+results row is validated against the course this session selected.
+
 The terminal unit reads three runs against each other - the non-ML baseline, the crude Part 0
 pipeline, and the finished one - and they happen weeks apart. What persists between them is their
 numbers, so the columns are fixed here rather than per notebook.
@@ -13,9 +16,7 @@ from typing import Any
 import pandas as pd
 
 from . import project
-
-STAGES = ("baseline", "v0", "part_02", "part_04", "part_05", "part_06", "part_07", "part_08",
-          "final")
+from .course import active_course
 
 COLUMNS = ("run_id", "stage", "written_at", "dataset_vintage", "start", "end", "total_return",
            "annual_return", "annual_vol", "sharpe", "max_drawdown", "turnover", "cost_bps",
@@ -40,9 +41,10 @@ def append_result(row: dict[str, Any], quiet: bool = False) -> pd.DataFrame:
             f"  The final unit reads three of these rows against each other and cannot do it "
             f"without them."
         )
-    if row["stage"] not in STAGES:
+    stages = active_course().stages
+    if row["stage"] not in stages:
         raise ValueError(
-            f"stage must be one of {', '.join(STAGES)}, got {row['stage']!r}.\n"
+            f"stage must be one of {', '.join(stages)}, got {row['stage']!r}.\n"
             f"  The unit's notebook tells you which one this run is."
         )
     unknown = [k for k in row if k not in COLUMNS]
