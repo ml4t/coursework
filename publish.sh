@@ -11,6 +11,48 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
+# ---------------------------------------------------------------------------
+# HOLD, 2026-08-25. Stefan ruled that this package moves out of foundations-dev
+# and becomes its own library repo in ~/ml4t/libraries alongside the six other
+# ml4t-* libraries. Do not upload from here.
+#
+# The order matters and cannot be redone: claiming a PyPI name is permanent, and
+# the first release's metadata is what the project page shows. Uploading from
+# the path the package is leaving publishes a Homepage and a source link that
+# are wrong on day one. Move first, set the repository URL, then upload.
+#
+# Outstanding before the first upload:
+#   - the move, and the repo name and whether it takes a -dev sidecar
+#     (three of the six libraries have one, three do not)
+#   - [project.urls] Repository, which does not exist yet; Homepage is
+#     https://ml4trading.io and should stay
+#
+# When that is done, delete this block. Nothing else in this script changes.
+# ---------------------------------------------------------------------------
+if [ "${1:-}" != "--move-is-done" ]; then
+    cat <<'HOLD'
+HOLD, 2026-08-25. This package moves out of foundations-dev and becomes its own
+library repo in ~/ml4t/libraries alongside the six other ml4t-* libraries
+(Stefan). Do not upload from here.
+
+The order matters and cannot be redone. Claiming a PyPI name is permanent, and
+the first release's metadata is what the project page shows, so uploading from
+the path the package is leaving publishes a source link that is wrong on day
+one. Move first, set the repository URL, then upload.
+
+Outstanding before the first upload:
+  - the move, the repo name, and whether it takes a -dev sidecar
+    (three of the six libraries have one, three do not)
+  - [project.urls] Repository, which does not exist yet.
+    Homepage is https://ml4trading.io and stays.
+
+Once that is done, delete the hold block from this script. Nothing else changes.
+HOLD
+    echo
+    echo "Refusing to upload. Re-run with --move-is-done to override."
+    exit 1
+fi
+
 echo "== tests =="
 uv run pytest -q
 
