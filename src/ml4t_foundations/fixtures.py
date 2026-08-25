@@ -26,12 +26,16 @@ def prices(n_sessions: int = SESSIONS, symbols: list[str] | None = None) -> pd.D
     # Three symbols list late, so anything that assumes a balanced panel fails here.
     for offset, symbol in enumerate(symbols[-3:], start=1):
         frame.loc[frame.index[: 20 * offset], symbol] = np.nan
+    # And two stop trading part way through, which is the half that matters: a rule screening on
+    # a symbol's whole history quietly keeps only the funds that were still around at the end.
+    for offset, symbol in enumerate(symbols[3:5], start=1):
+        frame.loc[frame.index[-40 * offset:], symbol] = np.nan
     return frame
 
 
 def returns(n_sessions: int = SESSIONS) -> pd.Series:
     """A single daily return series, for the objective and cost contracts."""
-    return prices(n_sessions)[SYMBOLS[0]].pct_change().dropna()
+    return prices(n_sessions)[SYMBOLS[0]].pct_change(fill_method=None).dropna()
 
 
 def panel(n_sessions: int = SESSIONS) -> pd.DataFrame:
@@ -39,9 +43,9 @@ def panel(n_sessions: int = SESSIONS) -> pd.DataFrame:
     px = prices(n_sessions)
     rng = np.random.default_rng(SEED + 1)
     long = px.stack().rename("close").to_frame()
-    long["mom_21"] = px.pct_change(21).stack()
-    long["vol_21"] = px.pct_change().rolling(21).std().stack()
-    long["fwd_21"] = px.pct_change(21).shift(-21).stack()
+    long["mom_21"] = px.pct_change(21, fill_method=None).stack()
+    long["vol_21"] = px.pct_change(fill_method=None).rolling(21).std().stack()
+    long["fwd_21"] = px.pct_change(21, fill_method=None).shift(-21).stack()
     long["noise"] = rng.normal(size=len(long))
     return long.dropna()
 

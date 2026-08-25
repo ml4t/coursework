@@ -82,18 +82,6 @@ def _leakage(obj) -> str:
     return "a prediction does not depend on which other rows were scored with it"
 
 
-def _seeded(obj) -> str:
-    X_tr, y_tr, X_va, _ = train_valid()
-    first = obj().fit(X_tr, y_tr).predict(X_va)
-    second = obj().fit(X_tr, y_tr).predict(X_va)
-    require(same(first, second), "the run is seeded",
-            "two fits of the same model on the same rows to agree",
-            "two fits that disagree",
-            "An unseeded boosting run makes every comparison in Part 6 unreadable: you cannot "
-            "tell a real difference from the seed.")
-    return "two fits on the same rows agree exactly"
-
-
 def _fit_before_predict(obj) -> str:
     _, _, X_va, _ = train_valid()
     try:
@@ -123,7 +111,8 @@ register(Contract(
     reference=reference,
     leakage=_leakage,
     leakage_note="a prediction does not depend on which other rows were scored with it",
-    invariants=(("the run is seeded", _seeded),
-                ("fit required before predict", _fit_before_predict),
+    # An unseeded boosting run is caught by the determinism check every contract already carries:
+    # two fits on the same rows have to agree, and an unseeded one does not.
+    invariants=(("fit required before predict", _fit_before_predict),
                 ("no empty predictions", _finite)),
 ))

@@ -67,12 +67,17 @@ def _ordered(obj) -> str:
 
 def _unbalanced(obj) -> str:
     panel = _probe(obj)
-    require(panel.isna().to_numpy().any(), "unbalanced panel kept",
-            "the nulls that mark a symbol before it listed",
-            "a panel with no nulls at all",
-            "Filling or dropping them here invents history for a fund that did not exist yet. "
-            "Notebooks drop those rows where they need to, per data/etf_close.json.")
-    return "nulls before a symbol listed are left in place"
+    on_disk = pd.read_parquet(_fixture_file())
+    expected = int(on_disk.isna().to_numpy().sum())
+    found = int(panel.isna().to_numpy().sum())
+    require(found == expected, "unbalanced panel kept",
+            f"the {expected} empty cells that are in the file, marking the sessions before a fund "
+            "listed and after it stopped trading",
+            f"{found}",
+            "Filling or dropping them here invents history for a fund that did not exist yet, and "
+            "carries a delisted one forward at its last price. Notebooks drop those rows where "
+            "they need to, per data/etf_close.json.")
+    return f"{found} empty cells left exactly as the file has them"
 
 
 register(Contract(

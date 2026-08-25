@@ -23,7 +23,7 @@ def reference(max_move: float = MAX_MOVE, max_flat_run: int = MAX_FLAT_RUN):
         breaches = []
         clean = panel.copy()
         nonpositive = panel <= 0
-        step = panel.pct_change().abs()
+        step = panel.pct_change(fill_method=None).abs()
         jump = step > max_move
         flat = (step == 0) & step.notna()
         run = flat.astype(int)

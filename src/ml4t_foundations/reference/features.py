@@ -25,9 +25,9 @@ def reference():
 
     def features(prices: pd.DataFrame) -> pd.DataFrame:
         raw = pd.DataFrame({
-            "mom_21": prices.pct_change(21).stack(future_stack=True),
-            "mom_63": prices.pct_change(63).stack(future_stack=True),
-            "vol_21": prices.pct_change().rolling(21).std().stack(future_stack=True),
+            "mom_21": prices.pct_change(21, fill_method=None).stack(future_stack=True),
+            "mom_63": prices.pct_change(63, fill_method=None).stack(future_stack=True),
+            "vol_21": prices.pct_change(fill_method=None).rolling(21).std().stack(future_stack=True),
         })
         raw.index = raw.index.set_names(["date", "symbol"])
         raw = raw.dropna()
