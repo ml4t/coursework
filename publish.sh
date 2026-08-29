@@ -2,7 +2,7 @@
 # Upload ml4t-coursework to PyPI. Run by Stefan, not by an agent: the token is his and the
 # first upload of a name cannot be undone.
 #
-#   bash ~/ml4t/courses/foundations-dev/helper/publish.sh
+#   bash ~/ml4t/libraries/ml4t-coursework/publish.sh
 #
 # Needs a PyPI API token. Either export it first:
 #   export UV_PUBLISH_TOKEN=pypi-...
@@ -12,36 +12,45 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 # ---------------------------------------------------------------------------
-# HOLD until the package has moved to its own repo, ~/ml4t/libraries/coursework
-# (Stefan, 2026-08-25). Do not upload from inside foundations-dev.
+# The package moved out of foundations-dev on 2026-08-29 and is its own repo
+# here. The hold that blocked the upload until it did is gone; what is left is
+# the reason that hold existed.
 #
 # The order cannot be redone. Claiming a PyPI name is permanent, and the first
-# release's metadata is what the project page shows forever after, so uploading
-# from the path the package is leaving publishes a source link that is wrong on
-# day one. Move first, then upload.
-#
-# Settled and already in pyproject.toml: MIT licence, and the house URL pattern
-# pointing at github.com/ml4t/coursework. The repo is ml4t/coursework public
-# with an ml4t/coursework-dev private sidecar.
-#
-# Once the move has landed, delete this block. Nothing else in the script changes.
+# release's metadata is what the project page shows forever after. pyproject.toml
+# points Homepage, Repository, Issues and Changelog at github.com/ml4t/coursework,
+# so that repository has to exist and this checkout has to be it before the first
+# upload freezes a link to a 404.
 # ---------------------------------------------------------------------------
-if [ "${1:-}" != "--move-is-done" ]; then
-    cat <<'HOLD'
-Refusing to upload: the package has not moved yet.
-
-ml4t-coursework becomes its own repo, ml4t/coursework, alongside the other
-published ml4t-* libraries. A PyPI name is permanent and the first release's
-metadata is frozen with it, so uploading from inside foundations-dev publishes
-a source link that is wrong on day one.
-
-Re-run with --move-is-done once the extraction has landed.
-HOLD
+echo "== source =="
+origin=$(git remote get-url origin 2>/dev/null || true)
+case "$origin" in
+    *ml4t/coursework*) ;;
+    *)
+        echo "  origin is '${origin:-unset}', not ml4t/coursework."
+        echo "  Refusing to upload: the metadata names a repository this checkout is not."
+        exit 1
+        ;;
+esac
+if ! git ls-remote --exit-code origin HEAD >/dev/null 2>&1; then
+    echo "  ${origin} does not exist yet, or is unreachable."
+    echo "  Create and push it first. The first release freezes a link to it and a release"
+    echo "  cannot be redone, so a source link that 404s on day one stays wrong."
     exit 1
 fi
+if [ -n "$(git status --porcelain)" ]; then
+    echo "  the working tree is dirty. Upload what is committed, not what is on disk."
+    exit 1
+fi
+if [ "$(git rev-parse HEAD)" != "$(git rev-parse @{u} 2>/dev/null)" ]; then
+    echo "  HEAD is not what origin has. Push first: the release points at a commit"
+    echo "  nobody else can fetch otherwise."
+    exit 1
+fi
+echo "  origin ${origin} exists and matches HEAD"
 
-# The flag says the source moved. These check that the metadata moved with it,
-# because those two can come apart and only one of them is visible on PyPI.
+# The source moved; these check that the metadata moved with it. The two can come
+# apart, and only one of them is visible on PyPI.
 echo "== metadata =="
 metadata_fault=0
 for key in Homepage Repository Issues Documentation Changelog; do

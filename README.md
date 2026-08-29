@@ -13,6 +13,11 @@ It is published here so that the first cell of a notebook on a free Colab runtim
 
 with no account, no credential and no repository to clone. That is the whole reason it is on PyPI.
 
+It also owns the course price panel: the symbol list, the window, the one-time fetch and a one-way
+fingerprint to check a download against.  explains what that panel is and why a fresh
+download differs from the slides in the fourth decimal place. More than one course reads it, which
+is why the machinery is here rather than inside either of them.
+
 **This package is not the course.** The video, the reading, the exercises, the checks for
 understanding and the market data all live elsewhere. What is here is useful mainly to someone
 enrolled; it is installable by anyone, and it will not teach you anything on its own.
