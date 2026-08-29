@@ -42,9 +42,9 @@ def path() -> Path:
     return project.data_dir() / FILENAME
 
 
-def load() -> pd.DataFrame:
+def load(target: Path | None = None) -> pd.DataFrame:
     """The panel every notebook reads. Never downloads."""
-    target = path()
+    target = path() if target is None else Path(target)
     if not target.is_file():
         raise FileNotFoundError(
             f"The price panel is not in your project folder yet.\n"
@@ -57,12 +57,18 @@ def load() -> pd.DataFrame:
     return frame.sort_index().astype("float64")
 
 
-def download(force: bool = False, quiet: bool = False) -> Path:
-    """Fetch the panel into the project folder, once, and check it against the fingerprint."""
-    target = path()
+def download(force: bool = False, quiet: bool = False, out: Path | str | None = None) -> Path:
+    """Fetch the panel, once, and check it against the fingerprint.
+
+    Writes into the student's project folder by default. `out` names a file instead, which is
+    what a checkout run outside Colab uses: there is no Drive and no project folder, only a
+    repository with a `data/` directory in it.
+    """
+    target = path() if out is None else Path(out)
+    target.parent.mkdir(parents=True, exist_ok=True)
     if target.is_file() and not force:
         if not quiet:
-            frame = load()
+            frame = load(target)
             print(f"already here: {target}\n  {frame.shape[0]:,} sessions x {frame.shape[1]} "
                   f"symbols, {frame.index[0].date()} to {frame.index[-1].date()}")
         return target
@@ -89,8 +95,7 @@ def download(force: bool = False, quiet: bool = False) -> Path:
 def check(prices: pd.DataFrame | None = None) -> str:
     """Compare a copy against the fingerprint and say, in words, whether it is sound.
 
-    Same tolerances as `data/download_etf_close.py` in the course repository, which is the
-    authoring path: a relative volatility deviation over 1%, or a session count off by more than
+    A relative volatility deviation over 1%, or a session count off by more than
     five, is a delisting or a bad bar rather than an adjustment revision.
     """
     prices = load() if prices is None else prices
