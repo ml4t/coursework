@@ -3,9 +3,9 @@
 The columns are shared by every course; which stage names are legal is the course's own, so a
 results row is validated against the course this session selected.
 
-The terminal unit reads three runs against each other - the non-ML baseline, the crude Part 0
-pipeline, and the finished one - and they happen weeks apart. What persists between them is their
-numbers, so the columns are fixed here rather than per notebook.
+The terminal unit reads two runs against each other - the non-ML baseline and the finished
+pipeline - and they happen weeks apart. What persists between them is their numbers, so the columns
+are fixed here rather than per notebook.
 """
 
 from __future__ import annotations
