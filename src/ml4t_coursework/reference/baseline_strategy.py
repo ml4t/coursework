@@ -1,4 +1,4 @@
-"""`baseline_strategy` - unit 1.4. The auditable non-ML rule everything else must beat."""
+"""`baseline_strategy` - unit 2.5. The auditable non-ML rule everything else must beat."""
 
 from __future__ import annotations
 
@@ -103,7 +103,7 @@ def _finite(obj) -> str:
 register(Contract(
     name="baseline_strategy",
     kind="callable",
-    units=("1.4",),
+    units=("2.5",),
     summary="An auditable non-ML rule, fixed before any result is seen.",
     probe=_probe,
     interface=_interface,

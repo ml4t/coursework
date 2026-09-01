@@ -1,4 +1,4 @@
-"""`model_gbm` - unit 6.2. Gradient boosting, on the same features and the same split as 6.1."""
+"""`model_gbm` - unit 6.3. Gradient boosting, on the same features and the same split as 6.1."""
 
 from __future__ import annotations
 
@@ -103,7 +103,7 @@ def _finite(obj) -> str:
 register(Contract(
     name="model_gbm",
     kind="callable",
-    units=("6.2",),
+    units=("6.3",),
     summary="A gradient-boosted model with capacity chosen rather than defaulted.",
     probe=_probe,
     interface=_interface,
