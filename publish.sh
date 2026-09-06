@@ -127,4 +127,4 @@ from ml4t_coursework import contracts
 print('installed', m.__version__, 'with', len(contracts.load_all()), 'components')"
 echo
 echo "Done. Change the first cell of the setup notebook and every unit notebook to:"
-echo "    %pip install -q ml4t-coursework"
+echo "    %pip install -q \"ml4t-coursework[data]\""
