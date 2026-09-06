@@ -89,7 +89,7 @@ def _finite(obj) -> str:
 register(Contract(
     name="task_form",
     kind="callable",
-    units=("4.3",),
+    units=("3.5",),
     summary="Puts the label in the form the model predicts, keeping the order the allocator reads.",
     probe=_probe,
     interface=_interface,

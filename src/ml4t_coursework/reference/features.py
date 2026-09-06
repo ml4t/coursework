@@ -102,7 +102,7 @@ def _finite(obj) -> str:
 register(Contract(
     name="features",
     kind="callable",
-    units=("5.1", "5.2"),
+    units=("4.1", "4.2"),
     summary="Turns prices into the predictors the model sees, normalized within each date.",
     probe=_probe,
     interface=_interface,

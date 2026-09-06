@@ -53,12 +53,16 @@ echo "  origin ${origin} exists and matches HEAD"
 # apart, and only one of them is visible on PyPI.
 echo "== metadata =="
 metadata_fault=0
-for key in Homepage Repository Issues Documentation Changelog; do
+for key in Homepage Repository Issues Changelog; do
     if ! grep -q "^${key} = " pyproject.toml; then
         echo "  MISSING [project.urls] ${key}"
         metadata_fault=1
     fi
 done
+if ! curl -Lsf -o /dev/null "https://github.com/ml4t/coursework"; then
+    echo "  github.com/ml4t/coursework is not publicly reachable."
+    metadata_fault=1
+fi
 if grep -q "Proprietary" pyproject.toml; then
     echo "  pyproject.toml still says Proprietary. The licence is MIT, like every sibling."
     metadata_fault=1

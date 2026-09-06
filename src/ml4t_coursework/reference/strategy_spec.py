@@ -26,7 +26,7 @@ def reference():
 register(Contract(
     name="strategy_spec",
     kind="config",
-    units=("1.1",),
+    units=("1.3",),
     summary="The strategy family and the economic mechanism the return is claimed to come from.",
     probe=probe,
     interface=interface_for(FIELDS),

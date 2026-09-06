@@ -40,7 +40,7 @@ def _rebalance_is_a_period(obj) -> str:
 register(Contract(
     name="backtest_config",
     kind="config",
-    units=("7.2",),
+    units=("6.2",),
     summary="Engine, fill assumption and rebalance frequency, with what the engine cannot answer.",
     probe=probe,
     interface=interface_for(FIELDS),

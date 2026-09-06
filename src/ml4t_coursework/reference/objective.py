@@ -26,7 +26,7 @@ def reference():
 register(Contract(
     name="objective",
     kind="config",
-    units=("1.2",),
+    units=("1.4",),
     summary="The metric the strategy is judged on and the cost tier it is judged under.",
     probe=probe,
     interface=interface_for(FIELDS),

@@ -12,7 +12,6 @@ import datetime as dt
 import inspect
 import json
 import textwrap
-from pathlib import Path
 from typing import Any, Callable, Sequence
 
 from . import contracts, project

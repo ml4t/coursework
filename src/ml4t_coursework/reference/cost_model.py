@@ -103,7 +103,7 @@ def _finite(obj) -> str:
 register(Contract(
     name="cost_model",
     kind="callable",
-    units=("8.3",),
+    units=("7.3",),
     summary="Charges the strategy for what it traded, in the units the return is measured in.",
     probe=_probe,
     interface=_interface,
