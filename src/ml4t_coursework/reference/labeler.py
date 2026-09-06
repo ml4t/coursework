@@ -113,7 +113,7 @@ def _finite(obj) -> str:
 register(Contract(
     name="labeler",
     kind="callable",
-    units=("4.1", "4.2"),
+    units=("3.3", "3.4"),
     summary="Turns prices into the outcome a decision at t is judged on, stamped at t.",
     probe=_probe,
     interface=_interface,

@@ -103,7 +103,7 @@ def _finite(obj) -> str:
 register(Contract(
     name="model_gbm",
     kind="callable",
-    units=("6.3",),
+    units=("5.3",),
     summary="A gradient-boosted model with capacity chosen rather than defaulted.",
     probe=_probe,
     interface=_interface,

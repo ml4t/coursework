@@ -137,7 +137,7 @@ def _fires(obj) -> str:
 register(Contract(
     name="exit_rule",
     kind="callable",
-    units=("8.4",),
+    units=("7.4",),
     summary="Closes a position that has breached its control, and leaves it closed.",
     probe=_probe,
     interface=_interface,

@@ -129,7 +129,7 @@ def _finite(obj) -> str:
 register(Contract(
     name="allocator",
     kind="callable",
-    units=("8.1", "8.2"),
+    units=("7.1", "7.2"),
     summary="Turns positions into weights inside a stated gross budget and per-name cap.",
     probe=_probe,
     interface=_interface,

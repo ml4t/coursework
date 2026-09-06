@@ -114,7 +114,7 @@ def _finite(obj) -> str:
 register(Contract(
     name="model_linear",
     kind="callable",
-    units=("6.1",),
+    units=("5.1",),
     summary="A regularized linear model: the baseline every later result is read against.",
     probe=_probe,
     interface=_interface,

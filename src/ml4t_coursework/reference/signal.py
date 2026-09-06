@@ -91,7 +91,7 @@ def _two_sided(obj) -> str:
 register(Contract(
     name="signal",
     kind="callable",
-    units=("7.1",),
+    units=("6.1",),
     summary="Turns model scores into which names to hold and which way.",
     probe=_probe,
     interface=_interface,
