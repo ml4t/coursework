@@ -16,36 +16,42 @@ LAG = 1
 
 
 def reference(lag: int = LAG):
-    """Shift every observation forward by the sessions it takes to become available."""
+    """Shift every observation forward by the sessions it takes to become available.
 
-    def availability_lag(frame: pd.DataFrame, lag: int = lag) -> pd.DataFrame:
-        return frame.shift(lag)
+    The shift is taken within each asset. On a long panel the row above is a different asset on
+    the same date, not the same asset on the session before, so shifting the frame as a whole
+    would hand each asset its neighbour's price.
+    """
+
+    def availability_lag(panel: pd.DataFrame, lag: int = lag) -> pd.DataFrame:
+        return panel.groupby(level="asset", sort=False).shift(lag)
 
     return availability_lag
 
 
 def _probe(obj):
-    return obj(fixtures.prices())
+    return obj(fixtures.panel())
 
 
 def _interface(obj) -> None:
-    require(callable(obj), "interface", "a callable taking a frame", f"a {type(obj).__name__}")
+    require(callable(obj), "interface", "a callable taking a panel", f"a {type(obj).__name__}")
     out = _probe(obj)
     require(isinstance(out, pd.DataFrame), "interface", "a DataFrame", f"a {type(out).__name__}")
-    frame = fixtures.prices()
-    require(out.index.equals(frame.index), "interface", "the same session index it was given",
+    panel = fixtures.panel()
+    require(out.index.equals(panel.index), "interface", "the same (date, asset) index it was given",
             "a different index", "The lag moves values, not rows.")
-    require(list(out.columns) == list(frame.columns), "interface", "the same columns",
+    require(list(out.columns) == list(panel.columns), "interface", "the same columns",
             "different columns")
 
 
 def _leakage(obj) -> str:
-    frame = fixtures.prices()
-    cut = frame.index[200]
-    full = obj(frame)
-    truncated = obj(frame.loc[:cut])
-    a, b = full.loc[:cut], truncated
-    require(same(a, b), "leakage probe",
+    panel = fixtures.panel()
+    dates = panel.index.get_level_values("date")
+    cut = dates.unique()[200]
+    full = obj(panel)
+    truncated = obj(panel[dates <= cut])
+    a = full[dates <= cut]
+    require(same(a, truncated), "leakage probe",
             "the same output for every date up to the cut whether or not later data exists",
             "output that changes when data after the cut is added",
             "That is what look-ahead is: a value at date t that could not have been computed on "
@@ -54,23 +60,28 @@ def _leakage(obj) -> str:
 
 
 def _actually_lags(obj) -> str:
-    frame = fixtures.prices()
-    out = obj(frame)
-    aligned = int((out.round(10) == frame.round(10)).to_numpy().sum())
+    panel = fixtures.panel()
+    out = obj(panel)
+    aligned = int((out.round(10) == panel.round(10)).to_numpy().sum())
     require(aligned == 0, "the lag is applied",
-            "no cell carrying the value observed on its own date",
-            f"{aligned} cells still carrying same-day values",
+            "no row carrying the value observed on its own date",
+            f"{aligned} values still carrying same-day observations",
             "A lag of zero is a decision to treat data as available the instant it is stamped, "
             "which no vendor delivers.")
-    return "no cell carries a same-day value"
+    return "no row carries a same-day value"
 
 
 def _leading_gap(obj) -> str:
-    out = obj(fixtures.prices())
-    require(out.iloc[0].isna().all(), "leading rows empty",
-            "the first rows empty, because nothing was available yet",
-            "a first row with values in it")
-    return "the panel starts empty and fills as data becomes available"
+    panel = fixtures.panel()
+    out = obj(panel)
+    first = out.groupby(level="asset", sort=False).head(1)
+    filled = first.notna().to_numpy().sum()
+    require(filled == 0, "leading rows empty",
+            "each asset's first row empty, because nothing was available for it yet",
+            f"{int(filled)} values on a first row",
+            "An asset that lists late starts its own gap, on its own date. Taking the gap from "
+            "the panel's first session instead gives every late lister a free head start.")
+    return f"each of the {first.index.get_level_values('asset').nunique()} assets starts empty"
 
 
 register(Contract(
@@ -80,7 +91,7 @@ register(Contract(
     summary="Delays every observation by the time it takes to become usable.",
     probe=_probe,
     interface=_interface,
-    interface_detail="a callable frame -> frame with the same index and columns",
+    interface_detail="a callable panel -> panel with the same (date, asset) index and columns",
     reference=reference,
     leakage=_leakage,
     leakage_note="output up to a cut date is unchanged by data after it",

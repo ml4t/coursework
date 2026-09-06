@@ -1,6 +1,6 @@
-"""`labeler` - units 4.1 and 4.2. The outcome the model is asked to predict.
+"""`labeler` - units 3.3 and 3.4. The outcome the model is asked to predict.
 
-4.1 fixes the horizon and what overlap costs. 4.2 tightens the same component so entry and exit
+3.3 fixes the horizon and what overlap costs. 3.4 tightens the same component so entry and exit
 are prices actually reachable after the decision, rather than the close of the bar the decision
 was made on.
 """
@@ -20,45 +20,52 @@ EXECUTION_DELAY = 1
 def reference(horizon: int = HORIZON, delay: int = EXECUTION_DELAY):
     """The return between the two prices a decision at t can actually transact at: the close one
     session later, and the close `horizon` sessions after that. Stamped at t, the date the
-    decision was made, so the feature row and the label row line up on the decision."""
+    decision was made, so the feature row and the label row line up on the decision.
 
-    def labeler(prices: pd.DataFrame, horizon: int = horizon, delay: int = delay) -> pd.Series:
-        entry = prices.shift(-delay)
-        exit_ = prices.shift(-delay - horizon)
+    The panel arrives long and the label leaves long. In between it is put back on a session grid
+    per asset, because `shift` has to step forward in sessions for one asset at a time, and an
+    asset that stopped trading must not have its next session borrowed from another.
+    """
+
+    def labeler(panel: pd.DataFrame, horizon: int = horizon, delay: int = delay) -> pd.Series:
+        close = panel["close"].unstack("asset")
+        entry = close.shift(-delay)
+        exit_ = close.shift(-delay - horizon)
         forward = (exit_ / entry - 1.0).stack(future_stack=True).dropna()
-        forward.index = forward.index.set_names(["date", "symbol"])
+        forward.index = forward.index.set_names(["date", "asset"])
         return forward.rename("label").astype("float64")
 
     return labeler
 
 
 def _probe(obj):
-    return obj(fixtures.prices())
+    return obj(fixtures.panel())
 
 
 def _interface(obj) -> None:
-    require(callable(obj), "interface", "a callable taking a price panel",
-            f"a {type(obj).__name__}")
+    require(callable(obj), "interface", "a callable taking a panel", f"a {type(obj).__name__}")
     out = _probe(obj)
     require(isinstance(out, pd.Series), "interface", "a Series of labels",
             f"a {type(out).__name__}")
     require(isinstance(out.index, pd.MultiIndex) and out.index.nlevels == 2, "interface",
-            "an index of (date, symbol), so a label lines up with the decision it belongs to",
+            "an index of (date, asset), so a label lines up with the decision it belongs to",
             f"an index of {type(out.index).__name__} with {out.index.nlevels} level(s)")
-    require(list(out.index.names) == ["date", "symbol"], "interface",
-            "index levels named date and symbol", f"levels named {list(out.index.names)}")
+    require(list(out.index.names) == ["date", "asset"], "interface",
+            "index levels named date and asset", f"levels named {list(out.index.names)}")
     require(len(out) > 0, "interface", "some labels", "an empty Series")
 
 
 def _leakage(obj) -> str:
     """A label is forward-looking by construction, so the probe asks the sharper question: does a
     label that had already resolved by the cut change when later prices arrive?"""
-    prices = fixtures.prices()
+    panel = fixtures.panel()
+    dates = panel.index.get_level_values("date")
+    sessions = dates.unique()
     cut_pos = 240
-    cut = prices.index[cut_pos]
-    resolved = prices.index[cut_pos - HORIZON - EXECUTION_DELAY - 5]
-    full = obj(prices)
-    truncated = obj(prices.loc[:cut])
+    cut = sessions[cut_pos]
+    resolved = sessions[cut_pos - HORIZON - EXECUTION_DELAY - 5]
+    full = obj(panel)
+    truncated = obj(panel[dates <= cut])
     a = full[full.index.get_level_values("date") <= resolved]
     b = truncated[truncated.index.get_level_values("date") <= resolved]
     require(len(b) > 0, "leakage probe", "labels that had resolved before the cut",
@@ -71,10 +78,11 @@ def _leakage(obj) -> str:
 
 
 def _stamped_on_the_decision(obj) -> str:
-    prices = fixtures.prices()
-    out = obj(prices)
+    panel = fixtures.panel()
+    sessions = panel.index.get_level_values("date").unique()
+    out = obj(panel)
     last_labelled = out.index.get_level_values("date").max()
-    unresolved = len(prices.index[prices.index > last_labelled])
+    unresolved = int((sessions > last_labelled).sum())
     require(unresolved >= HORIZON, "stamped on the decision",
             f"the last {HORIZON} or more sessions to carry no label, because their outcome has "
             "not happened yet",
@@ -85,11 +93,12 @@ def _stamped_on_the_decision(obj) -> str:
 
 
 def _executable(obj) -> str:
-    """4.2's tightening: the entry price is one a decision at t could actually have transacted."""
-    prices = fixtures.prices()
-    out = obj(prices)
-    same_bar = (prices.shift(-HORIZON) / prices - 1.0).stack(future_stack=True).dropna()
-    same_bar.index = same_bar.index.set_names(["date", "symbol"])
+    """3.4's tightening: the entry price is one a decision at t could actually have transacted."""
+    panel = fixtures.panel()
+    out = obj(panel)
+    close = panel["close"].unstack("asset")
+    same_bar = (close.shift(-HORIZON) / close - 1.0).stack(future_stack=True).dropna()
+    same_bar.index = same_bar.index.set_names(["date", "asset"])
     shared = out.index.intersection(same_bar.index)
     require(len(shared) > 0, "executable prices", "labels to compare", "no overlap")
     identical = same(out.reindex(shared).sort_index(), same_bar.reindex(shared).sort_index())
@@ -117,7 +126,7 @@ register(Contract(
     summary="Turns prices into the outcome a decision at t is judged on, stamped at t.",
     probe=_probe,
     interface=_interface,
-    interface_detail="a callable prices -> Series indexed by (date, symbol)",
+    interface_detail="a callable panel -> Series indexed by (date, asset)",
     reference=reference,
     leakage=_leakage,
     leakage_note="labels that resolved before a cut are unchanged by prices after it",

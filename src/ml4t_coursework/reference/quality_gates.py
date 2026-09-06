@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
 
 from .. import fixtures
@@ -16,39 +15,53 @@ MAX_FLAT_RUN = 5
 def reference(max_move: float = MAX_MOVE, max_flat_run: int = MAX_FLAT_RUN):
     """Three gates, each on information available at the bar itself or the one before it:
     a non-positive price, a one-session move too large to be a price, and a run of identical
-    closes long enough to be a stale feed. A breach voids the bar; it does not void the symbol."""
+    closes long enough to be a stale feed. A breach voids the bar; it does not void the asset.
+
+    Every comparison with the previous bar is taken within an asset. The row above on a long
+    panel is a different asset on the same date, so a gate that ignores the asset level measures
+    the gap between two unrelated prices and reports it as a jump.
+    """
 
     def quality_gates(panel: pd.DataFrame, max_move: float = max_move,
                       max_flat_run: int = max_flat_run):
-        breaches = []
-        clean = panel.copy()
-        nonpositive = panel <= 0
-        step = panel.pct_change(fill_method=None).abs()
+        close = panel["close"]
+        by_asset = close.groupby(level="asset", sort=False)
+        step = by_asset.pct_change(fill_method=None).abs()
+
+        nonpositive = close <= 0
         jump = step > max_move
         flat = (step == 0) & step.notna()
         run = flat.astype(int)
         for _ in range(max_flat_run - 1):
-            run = run * (run.shift(1).fillna(0).astype(int) + 1).clip(upper=max_flat_run)
+            prior = run.groupby(level="asset", sort=False).shift(1).fillna(0).astype(int)
+            run = run * (prior + 1).clip(upper=max_flat_run)
         stale = run >= max_flat_run
+
+        breaches = []
+        clean = panel.copy()
         for gate, mask in (("non-positive price", nonpositive), ("implausible move", jump),
                            ("stale feed", stale)):
-            hits = mask.stack()
-            hits = hits[hits]
-            for date, symbol in hits.index:
-                breaches.append({"gate": gate, "symbol": symbol, "date": date})
-            clean = clean.mask(mask)
-        report = pd.DataFrame(breaches, columns=["gate", "symbol", "date"])
+            for date, asset in mask[mask].index:
+                breaches.append({"gate": gate, "asset": asset, "date": date})
+            clean = clean.mask(mask, axis=0)
+        report = pd.DataFrame(breaches, columns=["gate", "asset", "date"])
         return clean, report
 
     return quality_gates
 
 
 def _dirty() -> pd.DataFrame:
-    """The fixture panel with one bad bar injected, so the gates have something to catch."""
-    panel = fixtures.prices().copy()
-    panel.iloc[100, 0] = panel.iloc[100, 0] * 4.0
-    panel.iloc[150, 1] = -1.0
+    """The fixture panel with two bad bars injected, so the gates have something to catch."""
+    panel = fixtures.panel().copy()
+    dates = panel.index.get_level_values("date").unique()
+    panel.loc[(dates[200], "ET00"), "close"] *= 4.0
+    panel.loc[(dates[210], "ET01"), "close"] = -1.0
     return panel
+
+
+def _injected() -> list[tuple]:
+    dates = fixtures.panel().index.get_level_values("date").unique()
+    return [(dates[200], "ET00"), (dates[210], "ET01")]
 
 
 def _probe(obj):
@@ -66,7 +79,11 @@ def _interface(obj) -> None:
             f"a {type(clean).__name__}")
     require(isinstance(report, pd.DataFrame), "interface", "a report as a DataFrame",
             f"a {type(report).__name__}")
-    for column in ("gate", "symbol", "date"):
+    require(clean.index.equals(_dirty().index), "interface",
+            "the same (date, asset) index it was given", "a different index",
+            "Void the bar, do not drop the row: a dropped row is indistinguishable from a "
+            "session the asset never traded.")
+    for column in ("gate", "asset", "date"):
         require(column in report.columns, "interface",
                 f"a report with a {column!r} column, so a breach can be traced to a bar",
                 f"columns {list(report.columns)}")
@@ -74,10 +91,11 @@ def _interface(obj) -> None:
 
 def _leakage(obj) -> str:
     panel = _dirty()
-    cut = panel.index[200]
+    dates = panel.index.get_level_values("date")
+    cut = dates.unique()[250]
     full, _ = obj(panel)
-    truncated, _ = obj(panel.loc[:cut])
-    require(same(full.loc[:cut], truncated), "leakage probe",
+    truncated, _ = obj(panel[dates <= cut])
+    require(same(full[dates <= cut], truncated), "leakage probe",
             "the same verdict on a bar whether or not later bars exist",
             "a verdict that changes when later data arrives",
             "A gate calibrated on the whole history - a z-score against the full-sample standard "
@@ -86,21 +104,20 @@ def _leakage(obj) -> str:
 
 
 def _catches(obj) -> str:
-    panel = _dirty()
-    clean, report = obj(panel)
+    clean, report = obj(_dirty())
     require(len(report) > 0, "injected breach caught", "the two bad bars to be reported",
             "an empty report")
-    require(np.isnan(clean.iloc[150, 1]), "injected breach caught",
-            "the negative price at row 150 voided", f"{clean.iloc[150, 1]}")
-    require(np.isnan(clean.iloc[100, 0]), "injected breach caught",
-            "the four-fold jump at row 100 voided", f"{clean.iloc[100, 0]}")
+    for key in _injected():
+        require(bool(pd.isna(clean.loc[key, "close"])), "injected breach caught",
+                f"the bad bar on {key[1]} at {key[0].date()} voided",
+                f"{clean.loc[key, 'close']}")
     return f"{len(report)} breaches reported, both injected bars among them"
 
 
 def _keeps_good(obj) -> str:
     panel = _dirty()
     clean, report = obj(panel)
-    lost = int(panel.notna().to_numpy().sum() - clean.notna().to_numpy().sum())
+    lost = int(panel["close"].notna().sum() - clean["close"].notna().sum())
     require(lost <= 12, "good bars kept",
             "only the breaching bars voided, not the series around them",
             f"{lost} bars voided against 2 injected",
@@ -117,7 +134,7 @@ register(Contract(
     summary="Voids bars that fail a stated quality gate, and reports which gate caught what.",
     probe=_probe,
     interface=_interface,
-    interface_detail="a callable panel -> (cleaned panel, report with gate/symbol/date)",
+    interface_detail="a callable panel -> (cleaned panel, report with gate/asset/date)",
     reference=reference,
     leakage=_leakage,
     leakage_note="a bar's verdict does not change when later bars arrive",

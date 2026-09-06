@@ -107,7 +107,7 @@ register(Contract(
     summary="Charges the strategy for what it traded, in the units the return is measured in.",
     probe=_probe,
     interface=_interface,
-    interface_detail="a callable trades(date x symbol) -> cost per date",
+    interface_detail="a callable trades(date x asset) -> cost per date",
     reference=reference,
     leakage=None,
     leakage_note=("not applicable: a cost is charged on the trade that has just been decided, and "

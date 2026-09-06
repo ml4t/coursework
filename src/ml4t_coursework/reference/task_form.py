@@ -27,7 +27,7 @@ def reference():
 
 
 def _label() -> pd.Series:
-    return labeler_reference()(fixtures.prices())
+    return labeler_reference()(fixtures.panel())
 
 
 def _probe(obj):
@@ -42,7 +42,7 @@ def _interface(obj) -> None:
             f"a {type(out).__name__}")
     label = _label()
     require(out.index.equals(label.index), "interface",
-            "one target per label, on the same (date, symbol) index",
+            "one target per label, on the same (date, asset) index",
             f"{len(out)} targets against {len(label)} labels")
 
 

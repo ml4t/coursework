@@ -63,7 +63,7 @@ def _interface(obj) -> None:
             f"a {type(out).__name__}")
     require(out.index.equals(signal.index), "interface", "one row of weights per date",
             f"{len(out)} rows against {len(signal)}")
-    require(list(out.columns) == list(signal.columns), "interface", "the same symbols",
+    require(list(out.columns) == list(signal.columns), "interface", "the same assets",
             "different columns")
 
 
@@ -133,7 +133,7 @@ register(Contract(
     summary="Turns positions into weights inside a stated gross budget and per-name cap.",
     probe=_probe,
     interface=_interface,
-    interface_detail="a callable positions(date x symbol) -> weights(date x symbol)",
+    interface_detail="a callable positions(date x asset) -> weights(date x asset)",
     reference=reference,
     leakage=_leakage,
     leakage_note="a date's weights depend only on that date's positions",

@@ -77,7 +77,13 @@ def _panel_that_fills_gaps():
     inner = contracts.get("data_panel").reference()
 
     def data_panel(path):
-        return inner(path).bfill()
+        # Every asset gets a row on every session, and a fund that had not listed yet inherits
+        # the first price it ever traded at.
+        out = inner(path)
+        grid = pd.MultiIndex.from_product(
+            [out.index.get_level_values("date").unique(),
+             out.index.get_level_values("asset").unique()], names=["date", "asset"])
+        return out.reindex(grid).groupby(level="asset").bfill().ffill()
     return data_panel
 
 
@@ -87,16 +93,13 @@ def _no_lag():
 
 def _gates_calibrated_on_everything():
     def quality_gates(panel, **_):
-        step = panel.pct_change(fill_method=None).abs()
+        step = panel["close"].groupby(level="asset", sort=False).pct_change(fill_method=None).abs()
         # The threshold is the sample's own 99.5th percentile, so what counts as an implausible
         # move on any given day is decided by moves that had not happened yet.
-        mask = step > step.stack().quantile(0.995)
-        report = pd.DataFrame(
-            [{"gate": "outlier", "symbol": s, "date": d} for d, s in mask.stack()[mask.stack()].index]
-        )
-        if report.empty:
-            report = pd.DataFrame(columns=["gate", "symbol", "date"])
-        return panel.mask(mask), report
+        mask = step > step.quantile(0.995)
+        report = pd.DataFrame([{"gate": "outlier", "asset": a, "date": d} for d, a in
+                               mask[mask].index], columns=["gate", "asset", "date"])
+        return panel.mask(mask, axis=0), report
     return quality_gates
 
 
@@ -111,12 +114,13 @@ def _pooled_quintiles():
 
 
 def _features_normalized_on_everything():
-    def features(prices):
+    def features(panel):
+        close = panel["close"].unstack("asset")
         raw = pd.DataFrame({
-            "mom_21": prices.pct_change(21).stack(future_stack=True),
-            "vol_21": prices.pct_change().rolling(21).std().stack(future_stack=True),
+            "mom_21": close.pct_change(21).stack(future_stack=True),
+            "vol_21": close.pct_change().rolling(21).std().stack(future_stack=True),
         })
-        raw.index = raw.index.set_names(["date", "symbol"])
+        raw.index = raw.index.set_names(["date", "asset"])
         raw = raw.dropna()
         return ((raw - raw.mean()) / raw.std()).dropna()
     return features
@@ -154,9 +158,10 @@ def _unseeded_gbm():
 
 
 def _universe_screened_on_the_whole_history():
-    def universe(prices, asof, **_):
-        complete = prices.notna().all()
-        return sorted(complete.index[complete].tolist())
+    def universe(panel, asof, **_):
+        sessions = panel.index.get_level_values("date").nunique()
+        present = panel.groupby(level="asset").size()
+        return sorted(present.index[present == sessions].tolist())
     return universe
 
 
@@ -190,13 +195,14 @@ def _stop_so_wide_it_never_fires():
 
 
 def _baseline_that_holds_the_winners():
-    def baseline_strategy(prices, **_):
+    def baseline_strategy(panel, **_):
         # Weight by what each fund went on to do over the whole sample: the most flattering
         # baseline available, and one nobody could have held.
-        total = (prices.ffill().iloc[-1] / prices.bfill().iloc[0]).fillna(1.0)
+        close = panel["close"].unstack("asset")
+        total = (close.ffill().iloc[-1] / close.bfill().iloc[0]).fillna(1.0)
         share = total / total.sum()
-        return pd.DataFrame([share.to_numpy()] * len(prices), index=prices.index,
-                            columns=prices.columns)
+        return pd.DataFrame([share.to_numpy()] * len(close), index=close.index,
+                            columns=close.columns)
     return baseline_strategy
 
 
