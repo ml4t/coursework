@@ -43,6 +43,9 @@ data = ["yfinance>=0.2.40"]
 packages = ["src/ml4t_coursework"]
 artifacts = ["src/ml4t_coursework/data/*.csv", "src/ml4t_coursework/py.typed"]
 
+[tool.hatch.build.targets.sdist]
+exclude = ["/.workspace", "/publish.sh"]
+
 [tool.ruff]
 line-length = 100
 
