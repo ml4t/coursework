@@ -1,4 +1,4 @@
-"""`data_panel` - unit 2.1. The stored price panel, loaded with its close convention stated.
+"""`data_panel`. The stored price panel, loaded with its close convention stated.
 
 The file on disk is wide, one column per asset, because that is how a price download arrives and
 how it stores compactly. What the rest of the pipeline works in is long: one row per (date,
@@ -129,7 +129,6 @@ def _unbalanced(obj) -> str:
 register(Contract(
     name="data_panel",
     kind="callable",
-    units=("2.1",),
     summary="Loads the stored price file and returns it long, one row per (date, asset).",
     probe=_probe,
     interface=_interface,

@@ -90,7 +90,7 @@ def test_discovery_reaches_a_package_outside_this_one(monkeypatch, tmp_path):
         "from ml4t_coursework.contracts import Contract, register\n"
         "def reference():\n"
         "    return lambda x: x\n"
-        "register(Contract(name='their_component', kind='callable', units=('1.1',),\n"
+        "register(Contract(name='their_component', kind='callable',\n"
         "                  summary='theirs', probe=lambda obj: obj('x'),\n"
         "                  interface=lambda obj: None, reference=reference))\n")
     monkeypatch.syspath_prepend(str(tmp_path))
@@ -112,5 +112,5 @@ def test_two_different_contracts_with_one_name_name_both_sources(monkeypatch):
     _reference.__module__ = "somewhere_else"
     with pytest.raises(ValueError, match="somewhere_else"):
         contracts.register(contracts.Contract(
-            name="fold_splitter", kind="callable", units=("1.1",), summary="clash",
+            name="fold_splitter", kind="callable", summary="clash",
             probe=existing.probe, interface=existing.interface, reference=_reference))

@@ -39,7 +39,6 @@ def test_every_contract_has_the_five_checks(name):
 def test_the_registry_covers_the_component_list():
     assert len(ALL) == 20, f"expected the 20 components of the component list, found {len(ALL)}"
     for name, contract in contracts.load_all().items():
-        assert contract.units, f"{name} does not say which unit writes it"
         assert contract.summary.endswith("."), f"{name}'s summary is not a sentence"
 
 

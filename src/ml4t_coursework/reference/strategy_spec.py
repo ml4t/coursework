@@ -1,4 +1,4 @@
-"""`strategy_spec` - unit 1.1. The family you are in, and the mechanism you are claiming."""
+"""`strategy_spec`. The family you are in, and the mechanism you are claiming."""
 
 from __future__ import annotations
 
@@ -26,7 +26,6 @@ def reference():
 register(Contract(
     name="strategy_spec",
     kind="config",
-    units=("1.3",),
     summary="The strategy family and the economic mechanism the return is claimed to come from.",
     probe=probe,
     interface=interface_for(FIELDS),

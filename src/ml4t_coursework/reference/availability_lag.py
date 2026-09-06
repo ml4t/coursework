@@ -1,4 +1,4 @@
-"""`availability_lag` - unit 2.2. The lag before a datum may be used.
+"""`availability_lag`. The lag before a datum may be used.
 
 This is the decision the rest of the pipeline silently depends on, and its leakage probe is the
 one check `certification.md` calls the most valuable in the course.
@@ -87,7 +87,6 @@ def _leading_gap(obj) -> str:
 register(Contract(
     name="availability_lag",
     kind="callable",
-    units=("2.2",),
     summary="Delays every observation by the time it takes to become usable.",
     probe=_probe,
     interface=_interface,

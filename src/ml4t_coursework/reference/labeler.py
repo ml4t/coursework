@@ -1,6 +1,7 @@
-"""`labeler` - units 3.3 and 3.4. The outcome the model is asked to predict.
+"""`labeler`. The outcome the model is asked to predict.
 
-3.3 fixes the horizon and what overlap costs. 3.4 tightens the same component so entry and exit
+The first unit fixes the horizon and what overlap costs. The second tightens the same component
+so entry and exit
 are prices actually reachable after the decision, rather than the close of the bar the decision
 was made on.
 """
@@ -93,7 +94,7 @@ def _stamped_on_the_decision(obj) -> str:
 
 
 def _executable(obj) -> str:
-    """3.4's tightening: the entry price is one a decision at t could actually have transacted."""
+    """The executable-price tightening: the entry is a price a decision at t could have transacted."""
     panel = fixtures.panel()
     out = obj(panel)
     close = panel["close"].unstack("asset")
@@ -122,7 +123,6 @@ def _finite(obj) -> str:
 register(Contract(
     name="labeler",
     kind="callable",
-    units=("3.3", "3.4"),
     summary="Turns prices into the outcome a decision at t is judged on, stamped at t.",
     probe=_probe,
     interface=_interface,

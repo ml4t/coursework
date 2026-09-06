@@ -1,4 +1,4 @@
-"""`holdout_split` - unit 3.2. A dated cutoff, written down and not opened."""
+"""`holdout_split`. A dated cutoff, written down and not opened."""
 
 from __future__ import annotations
 
@@ -72,7 +72,6 @@ def _covers(obj) -> str:
 register(Contract(
     name="holdout_split",
     kind="callable",
-    units=("3.2",),
     summary="Seals the last stretch of the sample behind a dated cutoff.",
     probe=_probe,
     interface=_interface,

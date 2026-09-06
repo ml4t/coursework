@@ -27,7 +27,6 @@ def report(answers: dict[str, str] | None = None, quiet: bool = False) -> dict:
     for name in sorted(known):
         meta = _meta(name)
         stamps[name] = {
-            "unit": known[name].units[0],
             "written": meta is not None,
             "conformant": bool(meta and meta.get("conformant")),
             "stamped_at": (meta or {}).get("stamped_at"),

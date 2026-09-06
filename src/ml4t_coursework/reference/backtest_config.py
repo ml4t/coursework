@@ -1,4 +1,4 @@
-"""`backtest_config` - unit 7.2. The assumptions the engine makes, said out loud."""
+"""`backtest_config`. The assumptions the engine makes, said out loud."""
 
 from __future__ import annotations
 
@@ -40,7 +40,6 @@ def _rebalance_is_a_period(obj) -> str:
 register(Contract(
     name="backtest_config",
     kind="config",
-    units=("6.2",),
     summary="Engine, fill assumption and rebalance frequency, with what the engine cannot answer.",
     probe=probe,
     interface=interface_for(FIELDS),

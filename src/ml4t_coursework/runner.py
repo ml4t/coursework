@@ -12,7 +12,8 @@ and a Research to Production student handed all twenty.
 
 The window matters more than it looks. Every run reports the development window unless it is
 asked for the holdout, because a runner that reported the holdout on every assembly run would
-spend it dozens of times, which is the one thing unit 8.1 says not to do.
+spend it dozens of times, which is the one thing the unit on multiple testing and the
+promotion standard says not to do.
 """
 
 from __future__ import annotations
@@ -114,44 +115,44 @@ def run(spec: MarketSpec, *, stage: str, strategy: str = "pipeline",
     get = _resolve(components)
     bars = spec.bars_per_year
 
-    # 6.2 how the backtest executes, including how often the book is allowed to change
+    # How the backtest executes, including how often the book is allowed to change
     config = get("backtest_config")
     rebalance = int(config["rebalance"])
 
-    # 2.1 the stored panel, long
+    # The stored panel, long
     source = spec.acquire()
     panel = get("data_panel")(str(source))
 
-    # 2.2 nothing is usable the moment it is stamped
+    # Nothing is usable the moment it is stamped
     panel = get("availability_lag")(panel)
     panel = panel[panel["close"].notna()]
 
-    # 2.3 a breach voids the bar
+    # A breach voids the bar
     panel, breaches = get("quality_gates")(panel)
     panel = panel[panel["close"].notna()]
 
     sessions = panel.index.get_level_values("date").unique()
     assets = sorted(panel.index.get_level_values("asset").unique())
 
-    # 2.4 who may be traded, decided with what was knowable then
+    # Who may be traded, decided with what was knowable then
     eligible = _eligibility(get("universe"), panel, sessions, assets, rebalance)
 
-    # 3.2 the holdout is sealed here and read only when this run is asked for it
+    # The holdout is sealed here and read only when this run is asked for it
     development, holdout = get("holdout_split")(sessions)
     reported = holdout if window == "holdout" else development
 
     if strategy == "baseline":
-        # 2.5 the auditable non-ML rule everything else must beat
+        # The auditable non-ML rule everything else must beat
         book = get("baseline_strategy")(panel).reindex(index=sessions, columns=assets).fillna(0.0)
     else:
-        # 3.3/3.4 the outcome a decision is judged on, and 3.5 the form the model predicts
+        # The outcome a decision is judged on, and the form the model predicts it in
         target = get("task_form")(get("labeler")(panel))
-        # 4.1/4.2 the predictors
+        # The predictors
         X = get("features")(panel)
         shared = X.index.intersection(target.index)
         X, y = X.loc[shared].sort_index(), target.loc[shared].sort_index()
 
-        # 3.1 folds exist so a student can select on them; this run reports, it does not select
+        # Folds exist so a student can select on them; this run reports, it does not select
         get("fold_splitter")(development)
 
         # Fitting stops a label horizon before the development window ends, so no training label
@@ -161,25 +162,25 @@ def run(spec: MarketSpec, *, stage: str, strategy: str = "pipeline",
         fit_until = development[max(len(development) - purge, 0) - 1]
         is_fit = dates <= fit_until
 
-        # 3.6 every parameter it uses is learned on the fitting rows and only there
+        # Every parameter it uses is learned on the fitting rows and only there
         prep = get("preprocessor")()
         prep.fit(X[is_fit])
         Z = prep.transform(X)
 
-        # 5.1 the model
+        # The model
         model = get("model_linear")()
         model.fit(Z[is_fit], y[is_fit])
         scores = pd.Series(model.predict(Z), index=Z.index).unstack("asset")
         scores = scores.reindex(index=sessions, columns=assets).where(eligible)
 
-        # 6.1 scores into positions, 7.1/7.2 positions into a book
+        # Scores into positions, positions into a book
         book = get("allocator")(get("signal")(scores)).reindex(
             index=sessions, columns=assets).fillna(0.0)
-        # The book is only allowed to change on the cadence 6.2 declared. Without this the
-        # allocator re-solves every bar and the run reports the turnover of a different strategy.
+        # The book is only allowed to change on the cadence backtest_config declared. Without
+        # this the allocator re-solves every bar and the run reports another strategy's turnover.
         on_schedule = pd.Series(book.index.isin(sessions[::rebalance]), index=book.index)
         book = book.where(on_schedule, axis=0).ffill().fillna(0.0)
-        # 7.4 position controls, which act between rebalances and so come after the cadence
+        # Position controls, which act between rebalances and so come after the cadence
         book = get("exit_rule")(book, panel)
 
     book = book.where(eligible, 0.0)
@@ -190,7 +191,7 @@ def run(spec: MarketSpec, *, stage: str, strategy: str = "pipeline",
     trades = book.diff()
     trades.iloc[0] = book.iloc[0]
 
-    # 7.3 what trading takes out
+    # What trading takes out
     costs = get("cost_model")(trades).reindex(sessions).fillna(0.0)
     net = (gross - costs).rename("return")
 

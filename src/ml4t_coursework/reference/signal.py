@@ -1,4 +1,4 @@
-"""`signal` - unit 7.1. From a score to a position: which names, and which way."""
+"""`signal`. From a score to a position: which names, and which way."""
 
 from __future__ import annotations
 
@@ -91,7 +91,6 @@ def _two_sided(obj) -> str:
 register(Contract(
     name="signal",
     kind="callable",
-    units=("6.1",),
     summary="Turns model scores into which names to hold and which way.",
     probe=_probe,
     interface=_interface,

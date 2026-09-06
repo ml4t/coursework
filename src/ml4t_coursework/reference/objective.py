@@ -1,4 +1,4 @@
-"""`objective` - unit 1.2. What the strategy is judged on, fixed before any result exists."""
+"""`objective`. What the strategy is judged on, fixed before any result exists."""
 
 from __future__ import annotations
 
@@ -26,7 +26,6 @@ def reference():
 register(Contract(
     name="objective",
     kind="config",
-    units=("1.4",),
     summary="The metric the strategy is judged on and the cost tier it is judged under.",
     probe=probe,
     interface=interface_for(FIELDS),

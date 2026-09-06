@@ -1,6 +1,6 @@
-"""`features` - units 5.1 and 5.2. A feature is a hypothesis about a driver.
+"""`features`. A feature is a hypothesis about a driver.
 
-5.1 builds one feature that encodes a named driver. 5.2 tightens the same component so the
+The first unit builds one feature that encodes a named driver. The second tightens it so the
 lookback is read against the label horizon and the values are normalized inside each date's
 cross-section rather than against pooled history.
 """
@@ -104,7 +104,6 @@ def _finite(obj) -> str:
 register(Contract(
     name="features",
     kind="callable",
-    units=("4.1", "4.2"),
     summary="Turns prices into the predictors the model sees, normalized within each date.",
     probe=_probe,
     interface=_interface,

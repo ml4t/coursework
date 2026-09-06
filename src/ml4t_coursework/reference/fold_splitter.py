@@ -1,4 +1,4 @@
-"""`fold_splitter` - unit 3.1. Walk-forward folds with a label buffer."""
+"""`fold_splitter`. Walk-forward folds with a label buffer."""
 
 from __future__ import annotations
 
@@ -102,7 +102,6 @@ def _buffered(obj) -> str:
 register(Contract(
     name="fold_splitter",
     kind="callable",
-    units=("3.1",),
     summary="Splits a date index into walk-forward train/validation folds with a label buffer.",
     probe=_probe,
     interface=_interface,
