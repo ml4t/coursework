@@ -63,9 +63,13 @@ class MarketSpec:
 
     def describe(self) -> str:
         cost = f"costs {self.cost_class}"
-        size = f"{self.download_mb:.0f} MB" if self.download_mb else "download not yet measured"
-        runtime = (f"{self.runtime_minutes:.0f} min end to end" if self.runtime_minutes
-                   else "runtime not yet measured")
+        size = (f"{self.download_mb:,.0f} MB" if self.download_mb >= 10
+                else f"{self.download_mb:.1f} MB" if self.download_mb
+                else "download not yet measured")
+        runtime = ("runtime not yet measured" if not self.runtime_minutes
+                   else f"{self.runtime_minutes * 60:.0f} s end to end"
+                   if self.runtime_minutes < 1
+                   else f"{self.runtime_minutes:,.0f} min end to end")
         lines = [f"{self.market} - {self.title}",
                  f"  {len(self.assets) or 'an unlisted number of'} assets on {self.bar} bars, "
                  f"{cost}",
@@ -108,6 +112,12 @@ def market_catalog() -> str:
     return "\n".join(market(k).describe() for k in sorted(MARKETS))
 
 
+def _etf_assets() -> tuple[str, ...]:
+    from . import data
+
+    return tuple(data.SYMBOLS)
+
+
 def _etf_file() -> Path:
     """Fetch the ETF closes if they are not already stored, and return the file."""
     from . import data
@@ -123,7 +133,12 @@ register_market(MarketSpec(
     bar="daily",
     execution_delay=1,
     purge=21,
+    assets=_etf_assets(),
     cost_class="material",
+    # Measured 2026-09-06 on the workstation: a 2.2 MB parquet, then a baseline run and a
+    # pipeline run over 5,031 sessions in about ten seconds each.
+    download_mb=2.2,
+    runtime_minutes=0.4,
     note=("The course's own market: a wide close file, an exchange calendar, and a universe that "
           "changes as funds list and close."),
     tags=("tier-a",),
