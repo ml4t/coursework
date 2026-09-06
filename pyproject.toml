@@ -32,7 +32,6 @@ dependencies = ["numpy>=1.24", "pandas>=2.2", "pyarrow>=14.0", "scikit-learn>=1.
 Homepage = "https://github.com/ml4t/coursework"
 Repository = "https://github.com/ml4t/coursework"
 Issues = "https://github.com/ml4t/coursework/issues"
-Documentation = "https://www.ml4trading.io/docs/coursework/"
 Changelog = "https://github.com/ml4t/coursework/releases"
 
 [project.optional-dependencies]
