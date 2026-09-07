@@ -11,7 +11,7 @@ are checked against, their results log and their submission report. It is named 
 rather than for a course, because more than one course installs it.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 from .components import catalog, load_component, save_component, source_of, status
 from .contracts import add_source
