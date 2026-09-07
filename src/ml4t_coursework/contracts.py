@@ -1,4 +1,11 @@
-"""What a component is, and the registry of the twenty the course asks for.
+"""What a component is, and the registry of the twenty the courses ask for.
+
+A contract says what a component must do. It deliberately does not say which unit writes it: a
+unit number belongs to one course's outline, and more than one course installs this package. A
+Research to Production student is handed all twenty and never sat the Foundations unit that
+writes the baseline, so a number here would appear in their own submission report naming a
+lesson they never took. Each course keeps that mapping beside its own units, where it cannot
+drift out of step with them - and it did drift, in both directions, while it lived here.
 
 One `Contract` per component, declared beside its reference implementation in `reference/`. The
 contract is authored *from* the reference, which is what guarantees it is passable, and every
@@ -23,7 +30,6 @@ _LOADED: set[str] = set()
 class Contract:
     name: str
     kind: str
-    units: tuple[str, ...]
     summary: str
     probe: Callable[[Any], Any]
     interface: Callable[[Any], None]
@@ -39,7 +45,7 @@ class Contract:
             raise ValueError(f"{self.name}: kind must be 'callable' or 'config', got {self.kind!r}")
 
     def describe(self) -> str:
-        lines = [f"{self.name} ({self.kind}, written in unit {' and '.join(self.units)})",
+        lines = [f"{self.name} ({self.kind})",
                  f"  {self.summary}",
                  f"  interface: {self.interface_detail}",
                  f"  leakage probe: {self.leakage_note}"]

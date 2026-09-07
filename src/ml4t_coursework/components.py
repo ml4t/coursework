@@ -196,7 +196,7 @@ def status() -> str:
         else:
             failed = [c["name"] for c in meta.get("checks", []) if not c["passed"]]
             state = f"NOT conformant ({', '.join(failed) or 'unknown'})"
-        lines.append(f"  {name:<20} unit {contract.units[0]:<5} {state}")
+        lines.append(f"  {name:<20} {state}")
     return "components in your project folder:\n" + "\n".join(lines)
 
 

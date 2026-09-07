@@ -1,4 +1,4 @@
-"""`baseline_strategy` - unit 2.5. The auditable non-ML rule everything else must beat."""
+"""`baseline_strategy`. The auditable non-ML rule everything else must beat."""
 
 from __future__ import annotations
 
@@ -81,8 +81,8 @@ def _invested(obj) -> str:
     require(len(active) > 100, "the baseline is invested",
             "a rule that holds something over most of the sample",
             f"positions on only {len(active)} of {len(out)} sessions",
-            "A baseline that is mostly in cash is a comparison against cash, which 7.3 already "
-            "makes separately.")
+            "A baseline that is mostly in cash is a comparison against cash, which the cost "
+            "model already prices separately.")
     worst = float((active - 1.0).abs().max())
     require(worst < 1e-6, "the baseline is invested",
             "a fully invested book on every active session",
@@ -114,7 +114,6 @@ def _finite(obj) -> str:
 register(Contract(
     name="baseline_strategy",
     kind="callable",
-    units=("2.5",),
     summary="An auditable non-ML rule, fixed before any result is seen.",
     probe=_probe,
     interface=_interface,

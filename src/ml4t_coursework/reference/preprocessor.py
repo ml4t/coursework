@@ -1,4 +1,4 @@
-"""`preprocessor` - unit 4.4. Winsorize, scale, impute, all fitted on training rows only."""
+"""`preprocessor`. Winsorize, scale, impute, all fitted on training rows only."""
 
 from __future__ import annotations
 
@@ -136,7 +136,6 @@ def _finite(obj) -> str:
 register(Contract(
     name="preprocessor",
     kind="callable",
-    units=("3.6",),
     summary="Winsorizes, scales and imputes, with every parameter learned on training rows.",
     probe=_probe,
     interface=_interface,

@@ -1,6 +1,7 @@
-"""`allocator` - units 8.1 and 8.2. From a position to a weight.
+"""`allocator`. From a position to a weight.
 
-8.1 maps the signal to weights. 8.2 tightens the same component with the constraint set, which is
+The first unit maps the signal to weights. The second tightens the same component with the
+constraint set, which is
 where the cap and the gross budget stop being implicit.
 """
 
@@ -129,7 +130,6 @@ def _finite(obj) -> str:
 register(Contract(
     name="allocator",
     kind="callable",
-    units=("7.1", "7.2"),
     summary="Turns positions into weights inside a stated gross budget and per-name cap.",
     probe=_probe,
     interface=_interface,

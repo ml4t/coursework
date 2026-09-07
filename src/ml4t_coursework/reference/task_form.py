@@ -1,4 +1,4 @@
-"""`task_form` - unit 4.3. The form the model predicts in.
+"""`task_form`. The form the model predicts in.
 
 The course fixes regression, and the argument is that the form is fixed by what the allocation
 rule consumes rather than by which form a model predicts best. So the contract does not require
@@ -89,7 +89,6 @@ def _finite(obj) -> str:
 register(Contract(
     name="task_form",
     kind="callable",
-    units=("3.5",),
     summary="Puts the label in the form the model predicts, keeping the order the allocator reads.",
     probe=_probe,
     interface=_interface,

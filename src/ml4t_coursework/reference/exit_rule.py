@@ -1,4 +1,4 @@
-"""`exit_rule` - unit 8.4. Position controls, and the one threshold worth calibrating."""
+"""`exit_rule`. Position controls, and the one threshold worth calibrating."""
 
 from __future__ import annotations
 
@@ -135,7 +135,7 @@ def _fires(obj) -> str:
     require(closed > 0, "the rule does something",
             "a position closed somewhere in a 35% fall held throughout",
             "a rule that never fires even then",
-            "A threshold so wide it never triggers is not a control; 8.4's own result is that a "
+            "A threshold so wide it never triggers is not a control; this unit's own result is that a "
             "stop grid need not identify a stable threshold, which is a different finding from "
             "never testing one.")
     return f"{closed} position-days closed by the rule"
@@ -144,7 +144,6 @@ def _fires(obj) -> str:
 register(Contract(
     name="exit_rule",
     kind="callable",
-    units=("7.4",),
     summary="Closes a position that has breached its control, and leaves it closed.",
     probe=_probe,
     interface=_interface,

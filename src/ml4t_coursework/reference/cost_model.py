@@ -1,6 +1,6 @@
-"""`cost_model` - unit 8.3. What trading takes out, before you decide anything survived.
+"""`cost_model`. What trading takes out, before you decide anything survived.
 
-The two decisions in 8.3 - the form, and where its parameters come from - are taught rather than
+The two decisions here - the form, and where its parameters come from - are taught rather than
 built, so the shipped form is the one every student uses and what they choose is its parameters.
 The contract is on the shape any cost model must have, so a student who changes the form still
 gets checked.
@@ -103,7 +103,6 @@ def _finite(obj) -> str:
 register(Contract(
     name="cost_model",
     kind="callable",
-    units=("7.3",),
     summary="Charges the strategy for what it traded, in the units the return is measured in.",
     probe=_probe,
     interface=_interface,

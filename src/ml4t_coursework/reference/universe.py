@@ -1,4 +1,4 @@
-"""`universe` - unit 2.4. Who you may trade, decided with what was knowable at the time."""
+"""`universe`. Who you may trade, decided with what was knowable at the time."""
 
 from __future__ import annotations
 
@@ -99,7 +99,6 @@ def _sorted_and_unique(obj) -> str:
 register(Contract(
     name="universe",
     kind="callable",
-    units=("2.4",),
     summary="Decides which assets may be traded on a date, using only what was known then.",
     probe=_probe,
     interface=_interface,

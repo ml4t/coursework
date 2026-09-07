@@ -57,7 +57,6 @@ class Conformance:
     delta: str = ""
     stamped_at: str = ""
     helper_version: str = ""
-    unit: str = ""
 
     def __str__(self) -> str:
         head = f"{self.component}: {'conformant' if self.conformant else 'NOT conformant'}"
@@ -68,7 +67,6 @@ class Conformance:
     def to_dict(self) -> dict:
         return {
             "component": self.component,
-            "unit": self.unit,
             "conformant": self.conformant,
             "checks": [{"name": c.name, "passed": c.passed, "detail": c.detail} for c in self.checks],
             "reference_delta": self.delta,
@@ -181,7 +179,7 @@ def run_invariants(contract, obj) -> list[CheckResult]:
 
 def evaluate(contract, obj) -> Conformance:
     """Run all five checks, stopping the gating ones at the first failure."""
-    result = Conformance(component=contract.name, unit=contract.units[0], conformant=True)
+    result = Conformance(component=contract.name, conformant=True)
     stages: list[Callable[[], Any]] = [
         lambda: [run_interface(contract, obj)],
         lambda: [run_leakage(contract, obj)],

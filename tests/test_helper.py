@@ -148,9 +148,17 @@ def test_status_lists_every_component_the_course_asks_for():
     assert "conformant" in text and "not written yet" in text
 
 
-def test_the_stamp_records_which_unit_wrote_it():
+def test_the_stamp_records_what_a_later_unit_needs_to_reload_it():
+    """The stamp carries no unit number: which unit writes a component is a course's fact, and
+    this package serves more than one course."""
     save_component("fold_splitter", _good_splitter(), quiet=True)
-    assert _meta("fold_splitter")["unit"] == "3.1"
+    meta = _meta("fold_splitter")
+    assert meta["component"] == "fold_splitter"
+    assert meta["conformant"] is True
+    assert meta["symbol"] == "fold_splitter"
+    assert meta["file"].endswith(".py")
+    assert meta["stamped_at"]
+    assert "unit" not in meta
 
 
 def test_the_packaged_fingerprint_matches_the_repository_copy():

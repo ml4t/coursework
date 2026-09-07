@@ -1,4 +1,4 @@
-"""`quality_gates` - unit 2.3. What a breach does, and to which bar."""
+"""`quality_gates`. What a breach does, and to which bar."""
 
 from __future__ import annotations
 
@@ -130,7 +130,6 @@ def _keeps_good(obj) -> str:
 register(Contract(
     name="quality_gates",
     kind="callable",
-    units=("2.3",),
     summary="Voids bars that fail a stated quality gate, and reports which gate caught what.",
     probe=_probe,
     interface=_interface,
