@@ -8,8 +8,9 @@ enforced.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -93,7 +94,8 @@ def same(left: Any, right: Any, tol: float = 1e-12) -> bool:
         return bool(np.allclose(left.to_numpy(dtype=float), right.to_numpy(dtype=float),
                                 atol=tol, rtol=0, equal_nan=True))
     if isinstance(left, (list, tuple)) and isinstance(right, (list, tuple)):
-        return len(left) == len(right) and all(same(a, b, tol) for a, b in zip(left, right))
+        return len(left) == len(right) and all(
+            same(a, b, tol) for a, b in zip(left, right, strict=True))
     if isinstance(left, pd.Index) and isinstance(right, pd.Index):
         return left.equals(right)
     if isinstance(left, np.ndarray) and isinstance(right, np.ndarray):
@@ -187,7 +189,7 @@ def evaluate(contract, obj) -> Conformance:
         lambda: run_invariants(contract, obj),
     ]
     names = ["interface", "leakage probe", "determinism", "domain invariants"]
-    for name, stage in zip(names, stages):
+    for name, stage in zip(names, stages, strict=True):
         try:
             result.checks.extend(stage())
         except Failure as failure:

@@ -23,7 +23,7 @@ def reference(alpha: float = ALPHA):
             self.intercept_ = None
             self.columns_ = None
 
-        def fit(self, X: pd.DataFrame, y: pd.Series) -> "LinearModel":
+        def fit(self, X: pd.DataFrame, y: pd.Series) -> LinearModel:
             self.columns_ = list(X.columns)
             design = X.to_numpy(dtype=float)
             centre = design.mean(axis=0)

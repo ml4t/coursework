@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-COURSES: dict[str, "Course"] = {}
+COURSES: dict[str, Course] = {}
 _active: str | None = None
 
 

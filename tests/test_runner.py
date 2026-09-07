@@ -13,9 +13,11 @@ import pandas as pd
 import pytest
 
 from ml4t_coursework import fixtures, markets, project, runner
+
 # `ml4t_coursework.results` is shadowed by the function of the same name that the
 # package re-exports, so the module's own names are imported directly.
-from ml4t_coursework.results import REQUIRED, results as results_log
+from ml4t_coursework.results import REQUIRED
+from ml4t_coursework.results import results as results_log
 
 
 @pytest.fixture

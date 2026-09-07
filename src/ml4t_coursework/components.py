@@ -12,7 +12,8 @@ import datetime as dt
 import inspect
 import json
 import textwrap
-from typing import Any, Callable, Sequence
+from collections.abc import Callable, Sequence
+from typing import Any
 
 from . import contracts, project
 from .checks import Conformance, evaluate
@@ -187,7 +188,7 @@ def load_component(name: str, quiet: bool = False) -> Any:
 def status() -> str:
     """Every component the course asks for, and where each one stands."""
     lines = []
-    for name, contract in sorted(contracts.load_all().items()):
+    for name, _contract in sorted(contracts.load_all().items()):
         meta = _meta(name)
         if meta is None:
             state = "not written yet"
