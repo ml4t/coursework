@@ -7,7 +7,8 @@ are about. What it cannot have is a leakage probe, so each says why in its own w
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from ..checks import require
 

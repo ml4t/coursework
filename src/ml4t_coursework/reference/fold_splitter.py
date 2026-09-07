@@ -43,7 +43,7 @@ def _interface(obj) -> None:
     for k, fold in enumerate(folds):
         require(isinstance(fold, tuple) and len(fold) == 2, "interface",
                 "each fold to be a (train, validation) pair", f"fold {k} is {type(fold).__name__}")
-        for part, label in zip(fold, ("train", "validation")):
+        for part, label in zip(fold, ("train", "validation"), strict=True):
             require(len(part) > 0, "interface", f"a non-empty {label} block",
                     f"fold {k}'s {label} block is empty")
 

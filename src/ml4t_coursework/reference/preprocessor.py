@@ -26,7 +26,7 @@ def reference(clip: float = CLIP):
             self.spread_ = None
             self.fill_ = None
 
-        def fit(self, X: pd.DataFrame) -> "Preprocessor":
+        def fit(self, X: pd.DataFrame) -> Preprocessor:
             self.lower_ = X.quantile(self.clip)
             self.upper_ = X.quantile(1 - self.clip)
             trimmed = X.clip(self.lower_, self.upper_, axis=1)

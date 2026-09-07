@@ -27,7 +27,7 @@ def reference(seed: int = SEED, max_depth: int = 3, learning_rate: float = 0.05,
             self.model_ = None
             self.columns_ = None
 
-        def fit(self, X: pd.DataFrame, y: pd.Series) -> "GbmModel":
+        def fit(self, X: pd.DataFrame, y: pd.Series) -> GbmModel:
             from sklearn.ensemble import HistGradientBoostingRegressor
 
             self.columns_ = list(X.columns)

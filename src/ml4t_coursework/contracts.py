@@ -16,11 +16,12 @@ from __future__ import annotations
 
 import importlib
 import pkgutil
+from collections.abc import Callable
 from dataclasses import dataclass
 from types import ModuleType
-from typing import Any, Callable
+from typing import Any
 
-CONTRACTS: dict[str, "Contract"] = {}
+CONTRACTS: dict[str, Contract] = {}
 
 _SOURCES: list[str] = [f"{__package__}.reference"]
 _LOADED: set[str] = set()

@@ -7,8 +7,17 @@ import json
 import pandas as pd
 import pytest
 
-from ml4t_coursework import (append_result, contract, load_component, project, report, results,
-                              save_component, source_of, status)
+from ml4t_coursework import (
+    append_result,
+    contract,
+    load_component,
+    project,
+    report,
+    results,
+    save_component,
+    source_of,
+    status,
+)
 from ml4t_coursework.components import _meta
 
 

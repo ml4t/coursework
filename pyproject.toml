@@ -48,5 +48,15 @@ exclude = ["/.workspace", "/publish.sh"]
 [tool.ruff]
 line-length = 100
 
+[tool.ruff.lint]
+# One definition, used by CI and by a bare `ruff check` alike. E4/E7/E9/F is what
+# ruff enforces with no configuration at all; I, UP and B are the three that pay
+# for themselves here - import order, syntax this package's floor (3.10) already
+# supports, and the bugbear checks that catch a real defect rather than a style
+# preference. The wider default set is not adopted: S102 and BLE001 both fire on
+# deliberate choices - `exec` rebuilds a student's saved component, and a broad
+# `except` is what stops one wrong component from ending their session.
+select = ["E4", "E7", "E9", "F", "I", "UP", "B"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

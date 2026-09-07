@@ -16,11 +16,11 @@ measured on a run, not estimated; a spec that has not been run says so with a ze
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable
 
-MARKETS: dict[str, "MarketSpec"] = {}
+MARKETS: dict[str, MarketSpec] = {}
 
 BARS_PER_YEAR = {"daily": 252, "8h": 3 * 365, "hourly": 24 * 365, "weekly": 52}
 
