@@ -35,7 +35,7 @@ Issues = "https://github.com/ml4t/coursework/issues"
 Changelog = "https://github.com/ml4t/coursework/releases"
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "ruff==0.16.6", "twine==7.0.0"]
 data = ["yfinance>=0.2.40"]
 
 [tool.hatch.build.targets.wheel]
