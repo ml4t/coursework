@@ -13,8 +13,8 @@ from .labeler import reference as labeler_reference
 
 @lru_cache(maxsize=1)
 def modelling_panel() -> tuple[pd.DataFrame, pd.Series]:
-    X = features_reference()(fixtures.prices())
-    y = labeler_reference()(fixtures.prices())
+    X = features_reference()(fixtures.panel())
+    y = labeler_reference()(fixtures.panel())
     shared = X.index.intersection(y.index)
     return X.loc[shared].sort_index(), y.loc[shared].sort_index()
 
@@ -30,7 +30,7 @@ def train_valid():
 
 @lru_cache(maxsize=1)
 def score_frame() -> pd.DataFrame:
-    """Model output in the shape the signal and allocator work in: date x symbol."""
+    """Model output in the shape the signal and allocator work in: date x asset."""
     X, y = modelling_panel()
     scores = (X["mom_21"] - 0.3 * X["vol_21"]).rename("score")
-    return scores.unstack("symbol").dropna(how="all").tail(120)
+    return scores.unstack("asset").dropna(how="all").tail(120)

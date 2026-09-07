@@ -23,13 +23,14 @@ def reference():
     differently. Whether any of them is true is the course's question, not this file's.
     """
 
-    def features(prices: pd.DataFrame) -> pd.DataFrame:
+    def features(panel: pd.DataFrame) -> pd.DataFrame:
+        close = panel["close"].unstack("asset")
         raw = pd.DataFrame({
-            "mom_21": prices.pct_change(21, fill_method=None).stack(future_stack=True),
-            "mom_63": prices.pct_change(63, fill_method=None).stack(future_stack=True),
-            "vol_21": prices.pct_change(fill_method=None).rolling(21).std().stack(future_stack=True),
+            "mom_21": close.pct_change(21, fill_method=None).stack(future_stack=True),
+            "mom_63": close.pct_change(63, fill_method=None).stack(future_stack=True),
+            "vol_21": close.pct_change(fill_method=None).rolling(21).std().stack(future_stack=True),
         })
-        raw.index = raw.index.set_names(["date", "symbol"])
+        raw.index = raw.index.set_names(["date", "asset"])
         raw = raw.dropna()
         by_date = raw.groupby(level="date")
         centred = (raw - by_date.transform("mean")) / by_date.transform("std").replace(0, np.nan)
@@ -39,27 +40,28 @@ def reference():
 
 
 def _probe(obj):
-    return obj(fixtures.prices())
+    return obj(fixtures.panel())
 
 
 def _interface(obj) -> None:
-    require(callable(obj), "interface", "a callable taking a price panel",
+    require(callable(obj), "interface", "a callable taking a panel",
             f"a {type(obj).__name__}")
     out = _probe(obj)
     require(isinstance(out, pd.DataFrame), "interface", "a DataFrame of features",
             f"a {type(out).__name__}")
-    require(isinstance(out.index, pd.MultiIndex) and list(out.index.names) == ["date", "symbol"],
-            "interface", "an index of (date, symbol), matching the labeler's",
+    require(isinstance(out.index, pd.MultiIndex) and list(out.index.names) == ["date", "asset"],
+            "interface", "an index of (date, asset), matching the labeler's",
             f"an index named {list(out.index.names)}")
     require(out.shape[1] >= 1, "interface", "at least one feature column", "no columns")
     require(len(out) > 0, "interface", "some feature rows", "an empty frame")
 
 
 def _leakage(obj) -> str:
-    prices = fixtures.prices()
-    cut = prices.index[240]
-    full = obj(prices)
-    truncated = obj(prices.loc[:cut])
+    panel = fixtures.panel()
+    dates = panel.index.get_level_values("date")
+    cut = dates.unique()[240]
+    full = obj(panel)
+    truncated = obj(panel[dates <= cut])
     a = full[full.index.get_level_values("date") <= cut]
     b = truncated[truncated.index.get_level_values("date") <= cut]
     shared = a.index.intersection(b.index)
@@ -106,7 +108,7 @@ register(Contract(
     summary="Turns prices into the predictors the model sees, normalized within each date.",
     probe=_probe,
     interface=_interface,
-    interface_detail="a callable prices -> DataFrame indexed by (date, symbol)",
+    interface_detail="a callable panel -> DataFrame indexed by (date, asset)",
     reference=reference,
     leakage=_leakage,
     leakage_note="a feature at date t is unchanged by prices after t",

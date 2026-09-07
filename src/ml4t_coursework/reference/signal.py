@@ -40,7 +40,7 @@ def _interface(obj) -> None:
     require(out.index.equals(scores.index), "interface", "one row per scored date",
             f"{len(out)} rows against {len(scores)}")
     require(list(out.columns) == list(scores.columns), "interface",
-            "the same symbols it was scored on", "different columns")
+            "the same assets it was scored on", "different columns")
 
 
 def _leakage(obj) -> str:
@@ -95,7 +95,7 @@ register(Contract(
     summary="Turns model scores into which names to hold and which way.",
     probe=_probe,
     interface=_interface,
-    interface_detail="a callable scores(date x symbol) -> positions(date x symbol)",
+    interface_detail="a callable scores(date x asset) -> positions(date x asset)",
     reference=reference,
     leakage=_leakage,
     leakage_note="a date's positions depend only on that date's scores",

@@ -49,7 +49,7 @@ def reference(clip: float = CLIP):
 
 
 def _split():
-    X = features_reference()(fixtures.prices())
+    X = features_reference()(fixtures.panel())
     dates = X.index.get_level_values("date").unique()
     cut = dates[int(len(dates) * 0.6)]
     train = X[X.index.get_level_values("date") <= cut]
