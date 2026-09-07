@@ -67,6 +67,75 @@ def test_a_component_that_leans_on_another_cell_is_refused(capsys):
     assert "include=" in detail or "also=" in detail, "and say how to fix it"
 
 
+def test_an_imported_class_travels_with_the_component(capsys):
+    """The normal thing a student does: import in one cell, use it in the component.
+
+    Neither `also` nor `include` can carry an import - one inlines the library's source, the
+    other writes its repr - so the import has to be worked out and written as an import.
+    """
+    from sklearn.linear_model import Ridge
+
+    class LinearModel:
+        def __init__(self):
+            self.model = Ridge(alpha=1.0)
+            self.columns_ = None
+
+        def fit(self, X, y):
+            self.columns_ = list(X.columns)
+            self.model.fit(X, y)
+            return self
+
+        def predict(self, X):
+            if self.columns_ is None:
+                raise RuntimeError("fit the model before predicting")
+            return pd.Series(self.model.predict(X[self.columns_]), index=X.index,
+                             name="prediction")
+
+        @property
+        def coef_(self):
+            return self.model.coef_
+
+    result = save_component("model_linear", LinearModel, quiet=True)
+    assert result.conformant, [c.detail for c in result.checks if not c.passed]
+
+    saved = (project.components_dir() / "model_linear.py").read_text()
+    assert "from sklearn.linear_model import Ridge" in saved
+    assert "class Ridge" not in saved, "the import travels, not the library's source"
+
+    assert load_component("model_linear", quiet=True) is not None
+    assert source_of("model_linear") == "yours"
+
+
+def test_a_module_imported_under_an_alias_travels_too():
+    import numpy.linalg as la
+
+    def fold_splitter(index, n_folds=4):
+        index = pd.Index(index).sort_values()
+        assert la.norm([1.0]) == 1.0
+        block = len(index) // (n_folds + 1)
+        return [(index[: block * (k + 1) - 21], index[block * (k + 1): block * (k + 2)])
+                for k in range(n_folds)]
+
+    assert save_component("fold_splitter", fold_splitter, quiet=True).conformant
+    saved = (project.components_dir() / "fold_splitter.py").read_text()
+    assert "import numpy.linalg as la" in saved
+
+
+def test_a_value_from_another_cell_is_still_refused(capsys):
+    """Carrying imports must not start swallowing the genuine missing-symbol case."""
+    outside = 21
+
+    def fold_splitter(index, n_folds=4):
+        index = pd.Index(index).sort_values()
+        block = len(index) // (n_folds + 1)
+        return [(index[: block * (k + 1) - outside], index[block * (k + 1): block * (k + 2)])
+                for k in range(n_folds)]
+
+    result = save_component("fold_splitter", fold_splitter)
+    assert not result.conformant
+    assert "outside" in [c.detail for c in result.checks if not c.passed][0]
+
+
 def test_include_carries_a_value_the_component_reads():
     threshold = 21
 
