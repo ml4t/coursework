@@ -208,16 +208,14 @@ def test_the_fingerprint_check_reads_the_columns_the_fingerprint_has():
     assert set(reference.columns) >= {"sessions", "annualized_vol", "mean_abs_return"}
 
 
-def test_the_declared_version_and_the_packaged_version_agree():
-    """`helper_version` on every run row comes from the module, the wheel's metadata comes from
-    pyproject, and the release workflow checks the tag against the module only. Two static strings
-    that nothing compares will drift, and a student's recorded version would then name something
-    pip never installed."""
-    import tomllib
-    from pathlib import Path
+def test_the_declared_version_and_the_installed_version_agree():
+    """`helper_version` on every run row comes from the module, the distribution metadata comes
+    from pyproject, and the release workflow checks the tag against the module only. Two static
+    strings that nothing compares will drift, and a student's recorded version would then name
+    something pip never installed. Reading the metadata rather than pyproject also catches a build
+    that is stale against the source tree."""
+    from importlib.metadata import version
 
     import ml4t_coursework
 
-    pyproject = Path(__file__).resolve().parent.parent / "pyproject.toml"
-    declared = tomllib.loads(pyproject.read_text())["project"]["version"]
-    assert ml4t_coursework.__version__ == declared
+    assert ml4t_coursework.__version__ == version("ml4t-coursework")
