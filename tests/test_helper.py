@@ -206,3 +206,18 @@ def test_the_fingerprint_check_reads_the_columns_the_fingerprint_has():
     assert "checked 100 of 100" in text
     assert "Worth a look" in text, "400 random sessions should not look like the course's panel"
     assert set(reference.columns) >= {"sessions", "annualized_vol", "mean_abs_return"}
+
+
+def test_the_declared_version_and_the_packaged_version_agree():
+    """`helper_version` on every run row comes from the module, the wheel's metadata comes from
+    pyproject, and the release workflow checks the tag against the module only. Two static strings
+    that nothing compares will drift, and a student's recorded version would then name something
+    pip never installed."""
+    import tomllib
+    from pathlib import Path
+
+    import ml4t_coursework
+
+    pyproject = Path(__file__).resolve().parent.parent / "pyproject.toml"
+    declared = tomllib.loads(pyproject.read_text())["project"]["version"]
+    assert ml4t_coursework.__version__ == declared
