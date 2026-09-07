@@ -8,10 +8,14 @@ session, which is the property this module exists to protect.
 
 from __future__ import annotations
 
+import ast
 import datetime as dt
+import importlib
 import inspect
 import json
+import sys
 import textwrap
+import types
 from collections.abc import Callable, Sequence
 from typing import Any
 
@@ -47,6 +51,102 @@ def _source_of(obj: Any, name: str) -> str:
             f"not a lambda, a partial or an instance.\n"
             f"  ({type(exc).__name__}: {exc})"
         ) from exc
+
+
+# --- carrying the component's imports with it -------------------------------------------------
+#
+# A component is validated on its source re-executed in an empty namespace, so anything it reads
+# from another cell has to travel with it. `also` and `include` carry a function and a value. An
+# import is the third case and neither of those fits it: `also` would try to inline the library's
+# own source and `include` would write its repr into the file. So the import travels as what it
+# is, an import statement, worked out from the names the component actually mentions.
+
+
+def _mentioned(source: str) -> set[str]:
+    """Every bare name and attribute root the source refers to.
+
+    Deliberately not scope-aware. It over-collects - a local variable's name lands here too - and
+    the caller-namespace lookup below is what filters, because a local name does not resolve to an
+    importable object. Precise scoping would be more code for the same result.
+    """
+    try:
+        tree = ast.parse(textwrap.dedent(source))
+    except SyntaxError:
+        return set()
+    found: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
+            found.add(node.id)
+        elif isinstance(node, ast.Attribute):
+            root = node
+            while isinstance(root, ast.Attribute):
+                root = root.value
+            if isinstance(root, ast.Name):
+                found.add(root.id)
+    return found
+
+
+def _import_line(name: str, obj: Any) -> str | None:
+    """The import that brings `obj` back as `name` on a cold session, or None if there is none."""
+    if isinstance(obj, types.ModuleType):
+        module = obj.__name__
+        return f"import {module}" if module == name else f"import {module} as {name}"
+    module = getattr(obj, "__module__", None)
+    symbol = getattr(obj, "__qualname__", None) or getattr(obj, "__name__", None)
+    if not module or not symbol or "." in symbol or module in {"__main__", "builtins"}:
+        return None
+    module = _public_home(module, symbol, obj)
+    if module is None:
+        return None
+    return f"from {module} import {symbol}" if symbol == name else (
+        f"from {module} import {symbol} as {name}")
+
+
+def _public_home(module: str, symbol: str, obj: Any) -> str | None:
+    """The shortest importable path that re-exports `obj`, which is the one the student typed.
+
+    `Ridge.__module__` is `sklearn.linear_model._ridge`, and writing that into a student's file
+    records a private path that the library is free to rename. Walking up to the shallowest
+    ancestor that still exports the same object recovers `sklearn.linear_model`.
+    """
+    parts = module.split(".")
+    best = None
+    for depth in range(1, len(parts) + 1):
+        candidate = ".".join(parts[:depth])
+        try:
+            found = importlib.import_module(candidate)
+        except Exception:
+            continue
+        if getattr(found, symbol, None) is obj:
+            best = candidate
+            break
+    if best is None:
+        # Not reachable from its own package - a class defined in a notebook cell, most often.
+        return None
+    return best
+
+
+def _caller_namespace(depth: int) -> dict[str, Any]:
+    """The notebook cell's names, as seen from `depth` frames above this one."""
+    try:
+        frame = sys._getframe(depth)
+    except ValueError:  # pragma: no cover - only if the stack is shallower than the call
+        return {}
+    return {**frame.f_globals, **frame.f_locals}
+
+
+def _carried_imports(source: str, namespace: dict[str, Any]) -> list[str]:
+    """The import statements the saved file needs so it stands on its own."""
+    provided = {"np", "pd", "numpy", "pandas"}
+    lines = []
+    for name in sorted(_mentioned(source) - provided):
+        obj = namespace.get(name)
+        if obj is None:
+            continue
+        line = _import_line(name, obj)
+        if line:
+            lines.append(line)
+    return lines
 
 
 def _rebuild(source: str, symbol: str, name: str) -> Any:
@@ -114,9 +214,11 @@ def save_component(
             raise ValueError(
                 f"{name}: pass the function or class itself, by name, not an instance or a lambda."
             )
-        parts = [f"{key} = {value!r}" for key, value in (include or {}).items()]
-        parts += [_source_of(helper, name) for helper in also]
-        parts.append(_source_of(obj, name))
+        written = [f"{key} = {value!r}" for key, value in (include or {}).items()]
+        written += [_source_of(helper, name) for helper in also]
+        written.append(_source_of(obj, name))
+        carried = _carried_imports("\n\n".join(written), _caller_namespace(2))
+        parts = (["\n".join(carried)] if carried else []) + written
         body = "\n\n".join(parts)
         checked = _rebuild(body, symbol, name)
         target = folder / f"{name}.py"
