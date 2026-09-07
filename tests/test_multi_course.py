@@ -114,3 +114,49 @@ def test_two_different_contracts_with_one_name_name_both_sources(monkeypatch):
         contracts.register(contracts.Contract(
             name="fold_splitter", kind="callable", summary="clash",
             probe=existing.probe, interface=existing.interface, reference=_reference))
+
+
+def _fake_colab(monkeypatch, mount):
+    """Install a `google.colab.drive` whose `mount` behaves as `mount` says."""
+    import types
+
+    google = types.ModuleType("google")
+    colab = types.ModuleType("google.colab")
+    drive = types.ModuleType("google.colab.drive")
+    drive.mount = mount
+    colab.drive = drive
+    google.colab = colab
+    for name, module in [
+        ("google", google),
+        ("google.colab", colab),
+        ("google.colab.drive", drive),
+    ]:
+        monkeypatch.setitem(sys.modules, name, module)
+
+
+def test_setup_falls_back_when_the_drive_cannot_actually_be_mounted(monkeypatch, tmp_path):
+    """The published Colab image ships `google.colab` with no backend to mount through, so
+    `drive.mount` raises there. Raising out of `setup` fails before `home` ever consults the
+    environment override that exists for exactly this case."""
+
+    def refuse(_path):
+        raise NotImplementedError("mounting is not supported in this environment")
+
+    _fake_colab(monkeypatch, refuse)
+    monkeypatch.setenv("ML4T_FOUNDATIONS_HOME", str(tmp_path / "project"))
+    use("foundations")
+
+    assert project.mount_drive() is False
+    assert project.setup(quiet=True) == tmp_path / "project"
+
+
+def test_a_mount_that_reports_success_without_producing_mydrive_is_not_a_mount(
+    monkeypatch, tmp_path
+):
+    """`drive.mount` returning normally is not evidence the folder is there; the caller decides
+    where the project lives from whether MyDrive exists."""
+    _fake_colab(monkeypatch, lambda _path: None)
+    monkeypatch.setenv("ML4T_FOUNDATIONS_HOME", str(tmp_path / "project"))
+    use("foundations")
+
+    assert project.mount_drive() is False
