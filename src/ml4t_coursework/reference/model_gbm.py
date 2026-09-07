@@ -1,4 +1,4 @@
-"""`model_gbm` - unit 6.3. Gradient boosting, on the same features and the same split as 6.1."""
+"""`model_gbm`. Gradient boosting, on the same features and the same split as the linear model."""
 
 from __future__ import annotations
 
@@ -65,7 +65,7 @@ def _interface(obj) -> None:
     require(isinstance(out, pd.Series), "interface", "predict to return a Series",
             f"a {type(out).__name__}")
     require(out.index.equals(X_va.index), "interface",
-            "one prediction per row it was asked about, on the same index as 6.1's model, because "
+            "one prediction per row it was asked about, on the same index as the linear model, because "
             "the two are compared",
             f"{len(out)} predictions against {len(X_va)} rows")
 
@@ -103,7 +103,6 @@ def _finite(obj) -> str:
 register(Contract(
     name="model_gbm",
     kind="callable",
-    units=("5.3",),
     summary="A gradient-boosted model with capacity chosen rather than defaulted.",
     probe=_probe,
     interface=_interface,

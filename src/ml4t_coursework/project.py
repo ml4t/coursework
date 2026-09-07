@@ -24,14 +24,26 @@ def on_colab() -> bool:
 
 
 def mount_drive(quiet: bool = True) -> bool:
-    """Mount Google Drive when running on Colab. A no-op anywhere else."""
+    """Mount Google Drive when running on Colab. A no-op anywhere else.
+
+    `google.colab` being importable does not mean a Drive can be mounted. The
+    published Colab runtime image has the package but no backend to mount
+    through, so `drive.mount` raises there; a headless or automated session can
+    also reach a mount it cannot complete. Returning False sends `home` to the
+    environment override or the home directory, which is the fallback it already
+    implements. Raising instead would fail before that fallback is ever consulted.
+    """
     try:
         from google.colab import drive  # type: ignore
     except ImportError:
         return False
-    if not (DRIVE_MOUNT / "MyDrive").is_dir():
+    if (DRIVE_MOUNT / "MyDrive").is_dir():
+        return True
+    try:
         drive.mount(str(DRIVE_MOUNT))
-    return True
+    except Exception:
+        return False
+    return (DRIVE_MOUNT / "MyDrive").is_dir()
 
 
 def home(create: bool = True) -> Path:
